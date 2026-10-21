@@ -6,6 +6,7 @@ using OpenSubtitleFetcher.Application;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Infrastructure.RestApi;
 using OpenSubtitleFetcher.Wpf.Models;
+using OpenSubtitleFetcher.Wpf.ViewModels;
 
 namespace OpenSubtitleFetcher.Wpf;
 
@@ -30,7 +31,10 @@ public partial class App
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
 
-        var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+        var mainWindow = new MainWindow
+        {
+            DataContext = ServiceProvider.GetRequiredService<MainWindowViewModel>()
+        };
         mainWindow.Show();
     }
 
@@ -41,7 +45,7 @@ public partial class App
         services.RegisterOpenSubtitlesApi(Configuration);
         services.AddScoped<ITemp, Temp>();
 
-        services.AddTransient<MainWindow>();
+        services.AddSingleton<MainWindowViewModel>();
     }
 }
 
