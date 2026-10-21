@@ -1,4 +1,6 @@
+using OpenSubtitleFetcher.Application.Logging;
 using OpenSubtitleFetcher.Domain.Models.Enums;
+using OpenSubtitleFetcher.Infrastructure.Logging;
 using OpenSubtitleFetcher.Infrastructure.RestApi;
 
 namespace OpenSubtitleFetcher.Application;
@@ -22,10 +24,11 @@ public class Temp : ITemp
         try
         {
             var result = await _service.SearchSubtitlesAsync(query, language, cancellationToken);
+            LogManager.Log($"Fetched {result.Data.Length} subtitles for {query}", LogResult.Success);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            LogManager.Log($"Failed to fetch subtitles for {query}: {ex.Message}", LogResult.Error);
         }
     }
 }

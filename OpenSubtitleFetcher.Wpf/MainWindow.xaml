@@ -6,9 +6,9 @@
         xmlns:models="clr-namespace:OpenSubtitleFetcher.Wpf.Models"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:enums="clr-namespace:OpenSubtitleFetcher.Domain.Models.Enums;assembly=OpenSubtitleFetcher.Domain"
+        xmlns:viewModels="clr-namespace:OpenSubtitleFetcher.Wpf.ViewModels"
         mc:Ignorable="d"
-        Title="OpenSubtitle fetcher" Height="450" Width="800"
-        Loaded="MainWindow_OnLoaded">
+        Title="OpenSubtitle fetcher" Height="450" Width="800" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}">
     <Window.Resources>
         <ObjectDataProvider x:Key="LanguageEnum" MethodName="GetValues"
                             ObjectType="{x:Type system:Enum}">
@@ -21,30 +21,31 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MaxHeight="100"/>
             <RowDefinition Height="14*"/>
-            <RowDefinition Height="*" MaxHeight="100"/>
+            <RowDefinition Height="*" MaxHeight="50"/>
+            <RowDefinition Height="4*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="7*"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <TextBox Name="Urls" Grid.Row="0" Grid.Column="0"/>
-        <Button Grid.Row="0" Grid.Column="1" Click="SelectDirectories" Margin="10, 0">Browse...</Button>
-        <Button Grid.Row="0" Grid.Column="2" Click="GetFiles">Open</Button>
+        <TextBox Text="{Binding Urls}" Grid.Row="0" Grid.Column="0"/>
+        <Button Grid.Row="0" Grid.Column="1" Command="{Binding SelectDirectoriesCommand}" Margin="10, 0">Browse...</Button>
+        <Button Grid.Row="0" Grid.Column="2" Command="{Binding GetFilesCommand}">Open</Button>
         <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,10" BorderBrush="Black" BorderThickness="1">
-            <ListView Name="FileList" Margin="5" HorizontalAlignment="Stretch">
+            <ListView ItemsSource="{Binding FileList}" Margin="5" HorizontalAlignment="Stretch">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Fetch">
                             <GridViewColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type models:VideoFile}">
+                                <DataTemplate DataType="{x:Type viewModels:VideoFileViewModel}">
                                     <CheckBox Margin="5,0" IsChecked="{Binding IsChecked}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="File name">
                             <GridViewColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type models:VideoFile}">
+                                <DataTemplate DataType="{x:Type viewModels:VideoFileViewModel}">
                                     <TextBlock Margin="5,0" Text="{Binding FileName}" HorizontalAlignment="Stretch"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -55,8 +56,11 @@
         </Border>
         <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
             <ComboBox ItemsSource="{Binding Source={StaticResource LanguageEnum}}"
-                      Name="SubLanguage" />
-            <Button Margin="10,0" Click="Submit">Download</Button>
+                      SelectedItem="{Binding Language}" />
+            <Button Margin="10,0" Command="{Binding SubmitCommand}">Download</Button>
         </WrapPanel>
+        <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0, 10" BorderThickness="1" BorderBrush="Black">
+            <TextBlock VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Text="{Binding LogBlock}" />
+        </Border>
     </Grid>
 </Window>

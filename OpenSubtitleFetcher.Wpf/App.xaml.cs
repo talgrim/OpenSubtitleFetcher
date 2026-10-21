@@ -3,9 +3,13 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Application.Logging;
+using OpenSubtitleFetcher.Infrastructure.Logging;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Infrastructure.RestApi;
+using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 using OpenSubtitleFetcher.Wpf.Models;
+using OpenSubtitleFetcher.Wpf.ViewModels;
 
 namespace OpenSubtitleFetcher.Wpf;
 
@@ -19,9 +23,12 @@ public partial class App
 
     public App()
     {
+        UiContext.Initialize(new DefaultContext());
+
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
         Configuration = builder.Build();
 
@@ -30,7 +37,14 @@ public partial class App
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
 
-        var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+        var mainWindowVM = ServiceProvider.GetRequiredService<ILogDisplay>();
+
+        LogManager.Initialize(mainWindowVM);
+
+        var mainWindow = new MainWindow
+        {
+            DataContext = mainWindowVM
+        };
         mainWindow.Show();
     }
 
@@ -38,10 +52,11 @@ public partial class App
     {
         services.Configure<OpenSubtitlesSettings>(Configuration.GetSection(ConfigSectionNames.OpenSubtitles));
 
-        services.RegisterOpenSubtitlesApi(Configuration);
-        services.AddScoped<ITemp, Temp>();
+        services.AddSingleton<ILogDisplay, MainWindowViewModel>();
 
-        services.AddTransient<MainWindow>();
+        services.RegisterOpenSubtitlesApi(Configuration);
+        services.RegisterApplication();
+        services.AddScoped<ITemp, Temp>();
     }
 }
 
