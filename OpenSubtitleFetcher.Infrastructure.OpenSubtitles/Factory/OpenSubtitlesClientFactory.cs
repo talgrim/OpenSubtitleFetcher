@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -10,11 +9,12 @@ namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
 internal interface IOpenSubtitlesClientFactory
 {
     IOpenSubtitlesApi CreateRestClient();
+    HttpClient CreateHttpClient();
 }
 
 internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
 {
-    public const string HttpClientName = "OpenSubtitleFetcher";
+    internal const string HttpClientName = "OpenSubtitleFetcher";
 
     private readonly OpenSubtitlesSettings _settings;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -34,10 +34,14 @@ internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
         };
     }
 
+    public HttpClient CreateHttpClient()
+    {
+        return _httpClientFactory.CreateClient(HttpClientName);
+    }
+
     public IOpenSubtitlesApi CreateRestClient()
     {
-        var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-        httpClient.BaseAddress = new Uri($"{_settings.Url}/v{_settings.Version}");
+        var httpClient = CreateHttpClient();
 
         var client = new RestClient(httpClient)
         {

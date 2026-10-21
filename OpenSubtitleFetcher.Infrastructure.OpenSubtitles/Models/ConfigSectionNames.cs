@@ -1,4 +1,4 @@
-namespace OpenSubtitleFetcher.Wpf.Models;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
 
 public class ConfigSectionNames
 {

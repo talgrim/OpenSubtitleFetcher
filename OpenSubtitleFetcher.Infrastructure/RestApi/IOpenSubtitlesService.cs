@@ -14,4 +14,8 @@ public interface IOpenSubtitlesService
         int fileId,
         string fileName,
         CancellationToken cancellationToken = default);
+
+    public Task<byte[]> GetSubtitlesFileAsync(
+        string link,
+        CancellationToken cancellationToken = default);
 }

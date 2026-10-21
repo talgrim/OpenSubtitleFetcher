@@ -105,8 +105,8 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var checkedFiles = FileList.Where(x => x.IsChecked).ToList();
 
-        var query = checkedFiles.First().FileName;
-        _ = Task.Run(() => _temp.TestAsync(query, Language));
+        var filePath = checkedFiles.First().FilePath;
+        _ = Task.Run(() => _temp.TestAsync(filePath, Language));
     }
 
     public void Log(string message, LogResult logLevel = LogResult.Info)

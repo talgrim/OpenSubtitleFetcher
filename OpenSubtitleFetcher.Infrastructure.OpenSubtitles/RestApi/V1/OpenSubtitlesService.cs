@@ -40,4 +40,11 @@ internal class OpenSubtitlesService : OpenSubtitlesServiceBase, IOpenSubtitlesSe
 
         return client.DownloadSubtitlesAsync(new DownloadSubtitlesRequestDto(fileId, fileName), cancellationToken);
     }
+
+    public Task<byte[]> GetSubtitlesFileAsync(string link, CancellationToken cancellationToken = default)
+    {
+        var client = _factory.CreateHttpClient();
+
+        return client.GetByteArrayAsync(link, cancellationToken);
+    }
 }
