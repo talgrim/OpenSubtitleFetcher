@@ -103,15 +103,22 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
     private async Task Submit()
     {
-        var checkedFiles = FileList.Where(x => x.IsChecked).ToList();
+        var filePaths = FileList.Where(x => x.IsChecked).Select(x => x.FilePath).ToList();
 
-        var query = checkedFiles.First().FileName;
-        _ = Task.Run(() => _temp.TestAsync(query, Language));
+        await Task.Run(() => _temp.TestAsync(filePaths, Language));
     }
 
     public void Log(string message, LogResult logLevel = LogResult.Info)
     {
-        _stringBuilder.AppendLine($"{DateTime.Now}: [{logLevel}] - {message}");
-        UiContext.Invoke(() => LogBlock = _stringBuilder.ToString());
+        string log;
+
+        // Log is called from parallel downloads
+        lock (_stringBuilder)
+        {
+            _stringBuilder.AppendLine($"{DateTime.Now}: [{logLevel}] - {message}");
+            log = _stringBuilder.ToString();
+        }
+
+        UiContext.Invoke(() => LogBlock = log);
     }
 }

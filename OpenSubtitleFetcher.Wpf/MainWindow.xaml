@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="clr-namespace:OpenSubtitleFetcher.Wpf.Models"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:enums="clr-namespace:OpenSubtitleFetcher.Domain.Models.Enums;assembly=OpenSubtitleFetcher.Domain"
         xmlns:viewModels="clr-namespace:OpenSubtitleFetcher.Wpf.ViewModels"
@@ -60,7 +59,9 @@
             <Button Margin="10,0" Command="{Binding SubmitCommand}">Download</Button>
         </WrapPanel>
         <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0, 10" BorderThickness="1" BorderBrush="Black">
-            <TextBlock VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Text="{Binding LogBlock}" />
+            <ScrollViewer>
+                <TextBlock VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Text="{Binding LogBlock}" />
+            </ScrollViewer>
         </Border>
     </Grid>
 </Window>

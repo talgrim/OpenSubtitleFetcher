@@ -1,6 +1,6 @@
-namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi.Subtitles;
+namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
 
-public class ResponseDto
+public class SearchSubtitlesResponseDto
 {
     public int TotalPages { get; set; }
     public int TotalCount { get; set; }

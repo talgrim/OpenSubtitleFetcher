@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -9,12 +8,13 @@ namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
 
 internal interface IOpenSubtitlesClientFactory
 {
-    IOpenSubtitlesApiSubtitles CreateRestClient();
+    IOpenSubtitlesApi CreateRestClient();
+    HttpClient CreateHttpClient();
 }
 
 internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
 {
-    public const string HttpClientName = "OpenSubtitleFetcher";
+    internal const string HttpClientName = "OpenSubtitleFetcher";
 
     private readonly OpenSubtitlesSettings _settings;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -34,18 +34,23 @@ internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
         };
     }
 
-    public IOpenSubtitlesApiSubtitles CreateRestClient()
+    public HttpClient CreateHttpClient()
     {
-        var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-        httpClient.BaseAddress = new Uri($"{_settings.Url}/v{_settings.Version}");
+        return _httpClientFactory.CreateClient(HttpClientName);
+    }
 
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Add("Api-Key", _settings.ApiKey);
-        httpClient.DefaultRequestHeaders.Add("User-Agent", _settings.UserAgent);
+    public IOpenSubtitlesApi CreateRestClient()
+    {
+        var httpClient = CreateHttpClient();
 
-        return new RestClient(httpClient)
+        var client = new RestClient(httpClient)
         {
             JsonSerializerSettings = _jsonSerializerSettings
-        }.For<IOpenSubtitlesApiSubtitles>();
+        }.For<IOpenSubtitlesApi>();
+
+        client.ApiKey = _settings.ApiKey;
+        client.UserAgent = _settings.UserAgent;
+
+        return client;
     }
 }

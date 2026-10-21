@@ -1,4 +1,4 @@
-namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi.Subtitles;
+namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
 
 public class FileDto
 {

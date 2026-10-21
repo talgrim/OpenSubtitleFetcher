@@ -1,5 +1,5 @@
 using OpenSubtitleFetcher.Domain.Models.Enums;
-using OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi.Subtitles;
+using OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
 using OpenSubtitleFetcher.Infrastructure.RestApi;
 
@@ -21,7 +21,7 @@ internal class OpenSubtitlesService : OpenSubtitlesServiceBase, IOpenSubtitlesSe
         _factory = factory;
     }
 
-    public Task<ResponseDto> SearchSubtitlesAsync(
+    public Task<SearchSubtitlesResponseDto> SearchSubtitlesAsync(
         string query,
         Language language,
         CancellationToken cancellationToken = default)
@@ -29,5 +29,22 @@ internal class OpenSubtitlesService : OpenSubtitlesServiceBase, IOpenSubtitlesSe
         var client = _factory.CreateRestClient();
 
         return client.SearchSubtitlesAsync(query, _languagesMap[language], cancellationToken);
+    }
+
+    public Task<DownloadSubtitlesResponseDto> DownloadSubtitlesAsync(
+        int fileId,
+        string fileName,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _factory.CreateRestClient();
+
+        return client.DownloadSubtitlesAsync(new DownloadSubtitlesRequestDto(fileId, fileName), cancellationToken);
+    }
+
+    public Task<byte[]> GetSubtitlesFileAsync(string link, CancellationToken cancellationToken = default)
+    {
+        var client = _factory.CreateHttpClient();
+
+        return client.GetByteArrayAsync(link, cancellationToken);
     }
 }

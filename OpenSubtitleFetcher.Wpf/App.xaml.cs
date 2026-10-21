@@ -1,14 +1,11 @@
-﻿using System.CodeDom.Compiler;
-using System.IO;
+﻿using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
 using OpenSubtitleFetcher.Application.Logging;
 using OpenSubtitleFetcher.Infrastructure.Logging;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
-using OpenSubtitleFetcher.Infrastructure.RestApi;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
-using OpenSubtitleFetcher.Wpf.Models;
 using OpenSubtitleFetcher.Wpf.ViewModels;
 
 namespace OpenSubtitleFetcher.Wpf;
@@ -50,8 +47,6 @@ public partial class App
 
     private void ConfigureServices(IServiceCollection services)
     {
-        services.Configure<OpenSubtitlesSettings>(Configuration.GetSection(ConfigSectionNames.OpenSubtitles));
-
         services.AddSingleton<ILogDisplay, MainWindowViewModel>();
 
         services.RegisterOpenSubtitlesApi(Configuration);
