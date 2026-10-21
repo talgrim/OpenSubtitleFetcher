@@ -2,6 +2,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSubtitleFetcher.Wpf", "OpenSubtitleFetcher.Wpf\OpenSubtitleFetcher.Wpf.csproj", "{09E64DCA-AF7F-4BF3-BC7F-52BDB6390E3D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSubtitleFetcher.Application", "OpenSubtitleFetcher.Application\OpenSubtitleFetcher.Application.csproj", "{92440CB0-FB16-40B4-BFE5-030769B5B1D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSubtitleFetcher.Infrastructure.OpenSubtitles", "OpenSubtitleFetcher.Infrastructure.OpenSubtitles\OpenSubtitleFetcher.Infrastructure.OpenSubtitles.csproj", "{FB4B4EB7-1D46-4654-B418-F894A25A3183}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSubtitleFetcher.Infrastructure", "OpenSubtitleFetcher.Infrastructure\OpenSubtitleFetcher.Infrastructure.csproj", "{500C3580-5356-45AF-B153-010AAC5D1ED2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSubtitleFetcher.Domain", "OpenSubtitleFetcher.Domain\OpenSubtitleFetcher.Domain.csproj", "{B7D9F9FE-BA39-4D8D-815E-D9E0AEDA00D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +20,21 @@ Global
 		{09E64DCA-AF7F-4BF3-BC7F-52BDB6390E3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09E64DCA-AF7F-4BF3-BC7F-52BDB6390E3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09E64DCA-AF7F-4BF3-BC7F-52BDB6390E3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92440CB0-FB16-40B4-BFE5-030769B5B1D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92440CB0-FB16-40B4-BFE5-030769B5B1D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92440CB0-FB16-40B4-BFE5-030769B5B1D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92440CB0-FB16-40B4-BFE5-030769B5B1D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB4B4EB7-1D46-4654-B418-F894A25A3183}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB4B4EB7-1D46-4654-B418-F894A25A3183}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB4B4EB7-1D46-4654-B418-F894A25A3183}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB4B4EB7-1D46-4654-B418-F894A25A3183}.Release|Any CPU.Build.0 = Release|Any CPU
+		{500C3580-5356-45AF-B153-010AAC5D1ED2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{500C3580-5356-45AF-B153-010AAC5D1ED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{500C3580-5356-45AF-B153-010AAC5D1ED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{500C3580-5356-45AF-B153-010AAC5D1ED2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7D9F9FE-BA39-4D8D-815E-D9E0AEDA00D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7D9F9FE-BA39-4D8D-815E-D9E0AEDA00D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7D9F9FE-BA39-4D8D-815E-D9E0AEDA00D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D9F9FE-BA39-4D8D-815E-D9E0AEDA00D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

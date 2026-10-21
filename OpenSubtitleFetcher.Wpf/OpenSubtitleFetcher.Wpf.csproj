@@ -24,4 +24,10 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\OpenSubtitleFetcher.Application\OpenSubtitleFetcher.Application.csproj" />
+      <ProjectReference Include="..\OpenSubtitleFetcher.Infrastructure.OpenSubtitles\OpenSubtitleFetcher.Infrastructure.OpenSubtitles.csproj" />
+      <ProjectReference Include="..\OpenSubtitleFetcher.Infrastructure\OpenSubtitleFetcher.Infrastructure.csproj" />
+    </ItemGroup>
+
 </Project>

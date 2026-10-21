@@ -1,6 +1,10 @@
-﻿using System.IO;
+﻿using System.CodeDom.Compiler;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
+using OpenSubtitleFetcher.Infrastructure.RestApi;
 using OpenSubtitleFetcher.Wpf.Models;
 
 namespace OpenSubtitleFetcher.Wpf;
@@ -25,11 +29,19 @@ public partial class App
         ConfigureServices(serviceCollection);
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
+
+        var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+        mainWindow.Show();
     }
 
     private void ConfigureServices(IServiceCollection services)
     {
-        services.Configure<OpenSubtitleSettings>(Configuration.GetSection(OpenSubtitleSettings.SectionName));
+        services.Configure<OpenSubtitlesSettings>(Configuration.GetSection(ConfigSectionNames.OpenSubtitles));
+
+        services.RegisterOpenSubtitlesApi(Configuration);
+        services.AddScoped<ITemp, Temp>();
+
+        services.AddTransient<MainWindow>();
     }
 }
 

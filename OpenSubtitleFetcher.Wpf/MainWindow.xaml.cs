@@ -2,7 +2,9 @@
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
+using OpenSubtitleFetcher.Application;
 using OpenSubtitleFetcher.Wpf.Models;
+using DomainLanguage = OpenSubtitleFetcher.Domain.Models.Enums.Language;
 
 namespace OpenSubtitleFetcher.Wpf;
 
@@ -11,16 +13,18 @@ namespace OpenSubtitleFetcher.Wpf;
 /// </summary>
 public partial class MainWindow
 {
+    private readonly ITemp _temp;
     private static readonly HashSet<string> VideoFilesExtensions = [".mp4", " .avi", ".mkv"];
 
-    public MainWindow()
+    public MainWindow(ITemp temp)
     {
+        _temp = temp;
         InitializeComponent();
     }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
-        SubLanguage.SelectedItem = Models.Language.Polish;
+        SubLanguage.SelectedItem = DomainLanguage.Polish;
     }
 
     private void SelectDirectories(object sender, RoutedEventArgs e)
@@ -58,8 +62,17 @@ public partial class MainWindow
         FileList.ItemsSource = videoFiles;
     }
 
-    private void Submit(object sender, RoutedEventArgs e)
+    private async void Submit(object sender, RoutedEventArgs e)
     {
-        var checkedFiles = FileList.ItemsSource.Cast<VideoFile>().Where(x => x.IsChecked);
+        var checkedFiles = FileList.ItemsSource?.Cast<VideoFile>().Where(x => x.IsChecked).ToList();
+
+        if (checkedFiles is null || checkedFiles.Count == 0)
+        {
+            return;
+        }
+
+        var query = checkedFiles.First()!.FileName;
+        var language = (DomainLanguage)SubLanguage.SelectedItem;
+        await _temp.TestAsync(query, language);
     }
 }
