@@ -23,8 +23,20 @@ public class Temp : ITemp
     {
         try
         {
-            var result = await _service.SearchSubtitlesAsync(query, language, cancellationToken);
-            LogManager.Log($"Fetched {result.Data.Length} subtitles for {query}", LogResult.Success);
+            var searchResult = await _service.SearchSubtitlesAsync(query, language, cancellationToken);
+            LogManager.Log($"Fetched {searchResult.Data.Length} subtitles for {query}", LogResult.Success);
+
+            var mostDownloadable = searchResult.Data.OrderBy(x => x.Attributes!.DownloadCount).FirstOrDefault();
+
+            if (mostDownloadable == null)
+            {
+                return;
+            }
+
+            var fileId = mostDownloadable.Attributes!.Files.First().FileId;
+            var fileName = query[..^4];
+            var downloadResult = await _service.DownloadSubtitlesAsync(fileId, fileName, cancellationToken);
+            LogManager.Log($"Acquired download link for subtitles {downloadResult.FileName}: {downloadResult.Link}");
         }
         catch (Exception ex)
         {

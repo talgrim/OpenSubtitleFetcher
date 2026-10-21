@@ -9,7 +9,7 @@ namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
 
 internal interface IOpenSubtitlesClientFactory
 {
-    IOpenSubtitlesApiSubtitles CreateRestClient();
+    IOpenSubtitlesApi CreateRestClient();
 }
 
 internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
@@ -34,18 +34,19 @@ internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
         };
     }
 
-    public IOpenSubtitlesApiSubtitles CreateRestClient()
+    public IOpenSubtitlesApi CreateRestClient()
     {
         var httpClient = _httpClientFactory.CreateClient(HttpClientName);
         httpClient.BaseAddress = new Uri($"{_settings.Url}/v{_settings.Version}");
 
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Add("Api-Key", _settings.ApiKey);
-        httpClient.DefaultRequestHeaders.Add("User-Agent", _settings.UserAgent);
-
-        return new RestClient(httpClient)
+        var client = new RestClient(httpClient)
         {
             JsonSerializerSettings = _jsonSerializerSettings
-        }.For<IOpenSubtitlesApiSubtitles>();
+        }.For<IOpenSubtitlesApi>();
+
+        client.ApiKey = _settings.ApiKey;
+        client.UserAgent = _settings.UserAgent;
+
+        return client;
     }
 }
