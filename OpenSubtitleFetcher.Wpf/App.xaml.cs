@@ -3,8 +3,11 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Application.Logging;
+using OpenSubtitleFetcher.Infrastructure.Logging;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Infrastructure.RestApi;
+using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 using OpenSubtitleFetcher.Wpf.Models;
 using OpenSubtitleFetcher.Wpf.ViewModels;
 
@@ -20,6 +23,8 @@ public partial class App
 
     public App()
     {
+        UiContext.Initialize(new DefaultContext());
+
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -32,9 +37,13 @@ public partial class App
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
 
+        var mainWindowVM = ServiceProvider.GetRequiredService<ILogDisplay>();
+
+        LogManager.Initialize(mainWindowVM);
+
         var mainWindow = new MainWindow
         {
-            DataContext = ServiceProvider.GetRequiredService<MainWindowViewModel>()
+            DataContext = mainWindowVM
         };
         mainWindow.Show();
     }
@@ -43,10 +52,11 @@ public partial class App
     {
         services.Configure<OpenSubtitlesSettings>(Configuration.GetSection(ConfigSectionNames.OpenSubtitles));
 
-        services.RegisterOpenSubtitlesApi(Configuration);
-        services.AddScoped<ITemp, Temp>();
+        services.AddSingleton<ILogDisplay, MainWindowViewModel>();
 
-        services.AddSingleton<MainWindowViewModel>();
+        services.RegisterOpenSubtitlesApi(Configuration);
+        services.RegisterApplication();
+        services.AddScoped<ITemp, Temp>();
     }
 }
 
