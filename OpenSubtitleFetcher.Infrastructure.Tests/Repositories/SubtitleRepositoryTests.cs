@@ -46,13 +46,13 @@ public sealed class SubtitleRepositoryTests : IDisposable
     {
         // Arrange
         var videoPath = _directory.CreateFile("Film.mkv", "video");
+        var subtitlesPath = Path.Combine(_directory.Path, "Film.srt");
         byte[] content = [1, 2, 3];
 
         // Act
-        var subtitlesPath = await _repository.SaveAsync(videoPath, content, CancellationToken.None);
+        await _repository.SaveAsync(videoPath, content, CancellationToken.None);
 
         // Assert
-        Assert.Equal(Path.Combine(_directory.Path, "Film.srt"), subtitlesPath);
         Assert.Equal(content, await File.ReadAllBytesAsync(subtitlesPath));
         Assert.Equal("video", await File.ReadAllTextAsync(videoPath));
     }
@@ -62,10 +62,10 @@ public sealed class SubtitleRepositoryTests : IDisposable
     {
         // Arrange
         var videoPath = _directory.CreateFile("Film.mkv");
-        _directory.CreateFile("Film.srt", "old");
+        var subtitlesPath = _directory.CreateFile("Film.srt", "old");
 
         // Act
-        var subtitlesPath = await _repository.SaveAsync(videoPath, [42], CancellationToken.None);
+        await _repository.SaveAsync(videoPath, [42], CancellationToken.None);
 
         // Assert
         Assert.Equal([42], await File.ReadAllBytesAsync(subtitlesPath));

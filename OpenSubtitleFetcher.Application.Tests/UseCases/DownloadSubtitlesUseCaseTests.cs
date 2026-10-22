@@ -1,6 +1,5 @@
 using ErrorOr;
 using Moq;
-using OpenSubtitleFetcher.Application.Abstractions.Logging;
 using OpenSubtitleFetcher.Application.Abstractions.Providers;
 using OpenSubtitleFetcher.Application.Abstractions.Repositories;
 using OpenSubtitleFetcher.Application.Models.Enums;
@@ -17,9 +16,18 @@ public class DownloadSubtitlesUseCaseTests
     private static readonly string OtherFilmPath = Path.Combine("Movies", "Other.mp4");
     private static readonly byte[] Content = [1, 2, 3];
 
+    private static readonly FileDownloadStatus[] FinalStatuses =
+    [
+        FileDownloadStatus.Skipped,
+        FileDownloadStatus.NotFound,
+        FileDownloadStatus.Downloaded,
+        FileDownloadStatus.Failed,
+        FileDownloadStatus.NotProcessed
+    ];
+
     private readonly Mock<ISubtitlesProvider> _provider = new();
     private readonly Mock<ISubtitleRepository> _repository = new();
-    private readonly Mock<ILogDisplay> _logger = new();
+    private readonly RecordingProgress<FileDownloadProgress> _progress = new();
     private readonly DownloadSubtitlesUseCase _useCase;
 
     public DownloadSubtitlesUseCaseTests()
@@ -36,9 +44,9 @@ public class DownloadSubtitlesUseCaseTests
 
         _repository
             .Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string path, byte[] _, CancellationToken _) => Path.ChangeExtension(path, ".srt"));
+            .Returns(Task.CompletedTask);
 
-        _useCase = new DownloadSubtitlesUseCase(_provider.Object, _repository.Object, _logger.Object);
+        _useCase = new DownloadSubtitlesUseCase(_provider.Object, _repository.Object);
     }
 
     [Fact]
@@ -50,46 +58,51 @@ public class DownloadSubtitlesUseCaseTests
             .ReturnsAsync([Candidate(10, fileId: 1), Candidate(99, fileId: 2), Candidate(50, fileId: 3)]);
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath], Language.English);
+        await RunAsync([FilmPath], Language.English);
 
         // Assert
         _provider.Verify(x => x.DownloadSubtitlesAsync(2, "Film", It.IsAny<CancellationToken>()), Times.Once);
         _provider.Verify(x => x.GetSubtitlesFileAsync("https://link", It.IsAny<CancellationToken>()), Times.Once);
         _repository.Verify(x => x.SaveAsync(FilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
-        VerifyLogged("Finished processing 1 file(s)", LogResult.Success);
+        Assert.Equal(
+        [
+            new FileDownloadProgress(FilmPath, FileDownloadStatus.Searching),
+            new FileDownloadProgress(FilmPath, FileDownloadStatus.Downloading),
+            new FileDownloadProgress(FilmPath, FileDownloadStatus.Downloaded, "10 downloads remaining")
+        ], ReportsFor(FilmPath));
     }
 
     [Fact]
-    public async Task SkipsFilesWithExistingSubtitles_WhenNotOverwriting()
+    public async Task ReportsSkipped_ForFilesWithExistingSubtitles_WhenNotOverwriting()
     {
         // Arrange
         _repository.Setup(x => x.HasSubtitles(FilmPath)).Returns(true);
         _repository.Setup(x => x.HasSubtitles(OtherFilmPath)).Returns(false);
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath, OtherFilmPath], Language.Polish, overwriteExisting: false);
+        await RunAsync([FilmPath, OtherFilmPath], overwriteExisting: false);
 
         // Assert
         _provider.Verify(
             x => x.SearchSubtitlesAsync("Film.mkv", It.IsAny<Language>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        _repository.Verify(x => x.SaveAsync(OtherFilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
-        VerifyLogged("Skipped 1 file(s) that already have subtitles", LogResult.Info);
+        Assert.Equal([new FileDownloadProgress(FilmPath, FileDownloadStatus.Skipped)], ReportsFor(FilmPath));
+        Assert.Equal(FileDownloadStatus.Downloaded, FinalStatusOf(OtherFilmPath));
     }
 
     [Fact]
     public async Task DoesNotCheckExistingSubtitles_WhenOverwriting()
     {
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath], Language.Polish, overwriteExisting: true);
+        await RunAsync([FilmPath], overwriteExisting: true);
 
         // Assert
         _repository.Verify(x => x.HasSubtitles(It.IsAny<string>()), Times.Never);
-        _repository.Verify(x => x.SaveAsync(FilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(FileDownloadStatus.Downloaded, FinalStatusOf(FilmPath));
     }
 
     [Fact]
-    public async Task DoesNotDownload_WhenNoSubtitlesFound()
+    public async Task ReportsNotFound_WhenNoSubtitlesFound()
     {
         // Arrange
         _provider
@@ -97,35 +110,36 @@ public class DownloadSubtitlesUseCaseTests
             .ReturnsAsync([]);
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath], Language.Polish);
+        await RunAsync([FilmPath]);
 
         // Assert
         _provider.Verify(
             x => x.DownloadSubtitlesAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        VerifyLogged("No subtitles found for Film.mkv", LogResult.Warning);
+        Assert.Equal(FileDownloadStatus.NotFound, FinalStatusOf(FilmPath));
     }
 
-    [Fact]
-    public async Task ContinuesWithOtherFiles_WhenDownloadLinkIsMissing()
+    [Theory]
+    [InlineData((int)SubtitleDownloadErrorCode.MissingLink)]
+    [InlineData(999)]
+    public async Task ReportsFailedWithErrorDescription_AndContinues_WhenDownloadFails(int errorCode)
     {
         // Arrange
-        var missingLink = Error.Custom((int)SubtitleDownloadErrorCode.MissingLink, "MissingLink", "No link");
         _provider
             .Setup(x => x.DownloadSubtitlesAsync(It.IsAny<int>(), "Film", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(missingLink);
+            .ReturnsAsync(Error.Custom(errorCode, "Code", "No link"));
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath, OtherFilmPath], Language.Polish);
+        await RunAsync([FilmPath, OtherFilmPath]);
 
         // Assert
         _repository.Verify(x => x.SaveAsync(FilmPath, It.IsAny<byte[]>(), It.IsAny<CancellationToken>()), Times.Never);
-        _repository.Verify(x => x.SaveAsync(OtherFilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
-        VerifyLogged("Failed to acquire download link for Film.mkv: No link", LogResult.Error);
+        Assert.Equal(new FileDownloadProgress(FilmPath, FileDownloadStatus.Failed, "No link"), ReportsFor(FilmPath).Last());
+        Assert.Equal(FileDownloadStatus.Downloaded, FinalStatusOf(OtherFilmPath));
     }
 
     [Fact]
-    public async Task ContinuesWithOtherFiles_WhenProviderThrows()
+    public async Task ReportsFailedWithExceptionMessage_AndContinues_WhenProviderThrows()
     {
         // Arrange
         _provider
@@ -133,24 +147,24 @@ public class DownloadSubtitlesUseCaseTests
             .ThrowsAsync(new HttpRequestException("Network down"));
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync([FilmPath, OtherFilmPath], Language.Polish);
+        await RunAsync([FilmPath, OtherFilmPath]);
 
         // Assert
-        _repository.Verify(x => x.SaveAsync(OtherFilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
-        VerifyLogged("Failed to fetch subtitles for Film.mkv: Network down", LogResult.Error);
+        Assert.Equal(
+            new FileDownloadProgress(FilmPath, FileDownloadStatus.Failed, "Network down"),
+            ReportsFor(FilmPath).Last());
+        Assert.Equal(FileDownloadStatus.Downloaded, FinalStatusOf(OtherFilmPath));
     }
 
     [Fact]
-    public async Task StopsProcessing_WhenQuotaIsExceeded()
+    public async Task ReportsNotProcessedForEveryFile_WhenQuotaIsExceeded()
     {
         // Arrange
-        var quotaExceeded = Error.Custom((int)SubtitleDownloadErrorCode.QuotaExceeded, "QuotaExceeded", "Quota reached");
-        SetupDownload(quotaExceeded);
-
-        var files = Enumerable.Range(0, 20).Select(i => Path.Combine("Movies", $"Film{i}.mkv")).ToList();
+        SetupDownload(Error.Custom((int)SubtitleDownloadErrorCode.QuotaExceeded, "QuotaExceeded", "Quota reached"));
+        var files = ManyFiles();
 
         // Act
-        await _useCase.DownloadSubtitlesForFilesAsync(files, Language.Polish);
+        await RunAsync(files);
 
         // Assert
         // Each worker cancels the run after its first quota error, so at most one file per parallel worker is tried
@@ -160,21 +174,67 @@ public class DownloadSubtitlesUseCaseTests
         _repository.Verify(
             x => x.SaveAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        VerifyLogged("Download quota exhausted, remaining files were not processed", LogResult.Warning);
+        Assert.All(files, file => Assert.Equal(FileDownloadStatus.NotProcessed, FinalStatusOf(file)));
     }
 
     [Fact]
-    public async Task StopsProcessing_WhenNoDownloadsRemain()
+    public async Task ReportsRemainingFilesAsNotProcessed_WhenNoDownloadsRemain()
     {
         // Arrange
         SetupDownload(Download(remaining: 0));
+        var files = ManyFiles();
 
+        // Act
+        await RunAsync(files);
+
+        // Assert
+        var finalReports = files.Select(file => ReportsFor(file).Last()).ToList();
+        var downloaded = finalReports.Count(x => x.Status == FileDownloadStatus.Downloaded);
+        var notProcessed = finalReports
+            .Where(x => x.Status == FileDownloadStatus.NotProcessed)
+            .ToList();
+
+        Assert.InRange(downloaded, 1, 3);
+        Assert.Equal(files.Count - downloaded, notProcessed.Count);
+        Assert.All(notProcessed, x => Assert.Equal("Download quota exhausted", x.Details));
+        _repository.Verify(
+            x => x.SaveAsync(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(downloaded));
+    }
+
+    [Fact]
+    public async Task ReportsExactlyOneFinalStatusPerFile()
+    {
+        // Arrange
+        string[] files = [FilmPath, OtherFilmPath, Path.Combine("Movies", "Missing.mkv"), Path.Combine("Movies", "Broken.mkv")];
+
+        _repository.Setup(x => x.HasSubtitles(FilmPath)).Returns(true);
+        _provider
+            .Setup(x => x.SearchSubtitlesAsync("Missing.mkv", It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        _provider
+            .Setup(x => x.SearchSubtitlesAsync("Broken.mkv", It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Broken"));
+
+        // Act
+        await RunAsync(files, overwriteExisting: false);
+
+        // Assert
+        Assert.All(files, file => Assert.Single(ReportsFor(file), x => FinalStatuses.Contains(x.Status)));
+        Assert.Equal(FileDownloadStatus.Skipped, FinalStatusOf(FilmPath));
+        Assert.Equal(FileDownloadStatus.Downloaded, FinalStatusOf(OtherFilmPath));
+        Assert.Equal(FileDownloadStatus.NotFound, FinalStatusOf(files[2]));
+        Assert.Equal(FileDownloadStatus.Failed, FinalStatusOf(files[3]));
+    }
+
+    [Fact]
+    public async Task Works_WithoutProgress()
+    {
         // Act
         await _useCase.DownloadSubtitlesForFilesAsync([FilmPath], Language.Polish);
 
         // Assert
         _repository.Verify(x => x.SaveAsync(FilmPath, Content, It.IsAny<CancellationToken>()), Times.Once);
-        VerifyLogged("Download quota exhausted, remaining files were not processed", LogResult.Warning);
     }
 
     [Fact]
@@ -185,11 +245,30 @@ public class DownloadSubtitlesUseCaseTests
         await cts.CancelAsync();
 
         // Act
-        var act = () => _useCase.DownloadSubtitlesForFilesAsync([FilmPath], Language.Polish, cancellationToken: cts.Token);
+        var act = () => _useCase.DownloadSubtitlesForFilesAsync(
+            [FilmPath], Language.Polish, progress: _progress, cancellationToken: cts.Token);
 
         // Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
-        _logger.Verify(x => x.Log(It.Is<string>(m => m.Contains("quota")), It.IsAny<LogResult>()), Times.Never);
+        Assert.Empty(_progress.Reports);
+    }
+
+    private Task RunAsync(
+        IReadOnlyCollection<string> files,
+        Language language = Language.Polish,
+        bool overwriteExisting = true)
+    {
+        return _useCase.DownloadSubtitlesForFilesAsync(files, language, overwriteExisting, _progress);
+    }
+
+    private List<FileDownloadProgress> ReportsFor(string filePath)
+    {
+        return _progress.Reports.Where(x => x.FilePath == filePath).ToList();
+    }
+
+    private FileDownloadStatus FinalStatusOf(string filePath)
+    {
+        return ReportsFor(filePath).Last().Status;
     }
 
     private void SetupDownload(ErrorOr<SubtitleDownload> result)
@@ -199,9 +278,9 @@ public class DownloadSubtitlesUseCaseTests
             .ReturnsAsync(result);
     }
 
-    private void VerifyLogged(string message, LogResult result)
+    private static List<string> ManyFiles()
     {
-        _logger.Verify(x => x.Log(message, result), Times.Once);
+        return Enumerable.Range(0, 20).Select(i => Path.Combine("Movies", $"Film{i}.mkv")).ToList();
     }
 
     private static SubtitleCandidate Candidate(int downloadCount, int fileId)
