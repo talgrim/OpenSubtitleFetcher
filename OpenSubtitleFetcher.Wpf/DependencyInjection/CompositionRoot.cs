@@ -8,39 +8,30 @@ using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 
 namespace OpenSubtitleFetcher.Wpf.DependencyInjection;
 
-public class CompositeRoot
+public static class CompositionRoot
 {
-    private static IServiceProvider ServiceProvider { get; set; } = null!;
-    private static IConfiguration Configuration { get; set;  } = null!;
-
-    public static void Initialize()
+    public static ServiceProvider Build()
     {
-        UiContext.Initialize(new DefaultContext());
-
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
-        Configuration = builder.Build();
+        var configuration = builder.Build();
 
         var serviceCollection = new ServiceCollection();
-        ConfigureServices(serviceCollection);
 
-        ServiceProvider = serviceCollection.BuildServiceProvider();
+        ConfigureServices(serviceCollection, configuration);
 
+        return serviceCollection.BuildServiceProvider();
     }
 
-    public static T GetRequiredService<T>() where T : notnull
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        return ServiceProvider.GetRequiredService<T>();
-    }
-
-    private static void ConfigureServices(IServiceCollection services)
-    {
+        services.AddSingleton<IUiContext, DefaultContext>();
         services.RegisterWpf();
         services.RegisterInfrastructure();
-        services.RegisterOpenSubtitlesApi(Configuration);
+        services.RegisterOpenSubtitlesApi(configuration);
         services.RegisterApplication();
     }
 }

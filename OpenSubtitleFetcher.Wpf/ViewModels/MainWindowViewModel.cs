@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
 using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
+using OpenSubtitleFetcher.Wpf.Helpers.FolderPicker;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;
 
@@ -11,6 +11,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IDownloadSubtitlesUseCase _downloadSubtitlesUseCase;
     private readonly IGetVideoFilesUseCase _getVideoFilesUseCase;
+    private readonly IFolderPicker _folderPicker;
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
 
@@ -37,10 +38,12 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         IDownloadSubtitlesUseCase downloadSubtitlesUseCase,
         IGetVideoFilesUseCase getVideoFilesUseCase,
-        LogViewModel logs)
+        LogViewModel logs,
+        IFolderPicker folderPicker)
     {
         _downloadSubtitlesUseCase = downloadSubtitlesUseCase;
         _getVideoFilesUseCase = getVideoFilesUseCase;
+        _folderPicker = folderPicker;
         Logs = logs;
 
         SelectDirectoriesCommand = new RelayCommand(SelectDirectories);
@@ -50,14 +53,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void SelectDirectories()
     {
-        var openFolderDialog = new OpenFolderDialog
+        var folders = _folderPicker.SelectFolders(); 
+        if (folders.Length > 0)
         {
-            Multiselect = true,
-        };
-        
-        if (openFolderDialog.ShowDialog() == true)
-        {
-            Urls = string.Join(';', openFolderDialog.FolderNames);
+            Urls = string.Join(';', folders);
         }
     }
 

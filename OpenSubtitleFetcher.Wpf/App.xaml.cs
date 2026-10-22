@@ -1,4 +1,6 @@
-﻿using OpenSubtitleFetcher.Wpf.DependencyInjection;
+﻿using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using OpenSubtitleFetcher.Wpf.DependencyInjection;
 using OpenSubtitleFetcher.Wpf.ViewModels;
 
 namespace OpenSubtitleFetcher.Wpf;
@@ -8,18 +10,25 @@ namespace OpenSubtitleFetcher.Wpf;
 /// </summary>
 public partial class App
 {
+    private ServiceProvider? _services;
 
-    public App()
+    protected override void OnStartup(StartupEventArgs e)
     {
-        CompositeRoot.Initialize();
-
-        var mainWindowVM = CompositeRoot.GetRequiredService<MainWindowViewModel>();
+        base.OnStartup(e);
+        _services = CompositionRoot.Build();
 
         var mainWindow = new MainWindow
         {
-            DataContext = mainWindowVM
+            DataContext = _services.GetRequiredService<MainWindowViewModel>()
         };
+
         mainWindow.Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _services?.Dispose();
+        base.OnExit(e);
     }
 }
 
