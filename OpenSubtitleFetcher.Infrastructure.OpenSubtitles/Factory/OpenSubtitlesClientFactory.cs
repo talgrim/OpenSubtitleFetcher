@@ -1,0 +1,57 @@
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.RestApi;
+using RestEase;
+
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
+
+internal interface IOpenSubtitlesClientFactory
+{
+    IOpenSubtitlesApi CreateRestClient();
+    HttpClient CreateHttpClient();
+}
+
+internal class OpenSubtitlesClientFactory : IOpenSubtitlesClientFactory
+{
+    internal const string HttpClientName = "OpenSubtitleFetcher";
+
+    private readonly OpenSubtitlesSettings _settings;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly JsonSerializerSettings _jsonSerializerSettings;
+
+    public OpenSubtitlesClientFactory(IOptions<OpenSubtitlesSettings> settingsOptions, IHttpClientFactory httpClientFactory)
+    {
+        _settings = settingsOptions.Value;
+        _httpClientFactory = httpClientFactory;
+
+        _jsonSerializerSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy()
+            }
+        };
+    }
+
+    public HttpClient CreateHttpClient()
+    {
+        return _httpClientFactory.CreateClient(HttpClientName);
+    }
+
+    public IOpenSubtitlesApi CreateRestClient()
+    {
+        var httpClient = CreateHttpClient();
+
+        var client = new RestClient(httpClient)
+        {
+            JsonSerializerSettings = _jsonSerializerSettings
+        }.For<IOpenSubtitlesApi>();
+
+        client.ApiKey = _settings.ApiKey;
+        client.UserAgent = _settings.UserAgent;
+
+        return client;
+    }
+}
