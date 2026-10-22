@@ -8,7 +8,7 @@ namespace OpenSubtitleFetcher.Application.Abstractions.Providers;
 public interface ISubtitlesProvider
 {
     public Task<IReadOnlyCollection<SubtitleCandidate>> SearchSubtitlesAsync(
-        string query,
+        string videoFilePath,
         Language language,
         CancellationToken cancellationToken = default);
 

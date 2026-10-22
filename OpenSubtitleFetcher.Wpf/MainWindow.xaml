@@ -6,6 +6,7 @@
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         xmlns:enums="clr-namespace:OpenSubtitleFetcher.Domain.Models.Enums;assembly=OpenSubtitleFetcher.Domain"
         xmlns:viewModels="clr-namespace:OpenSubtitleFetcher.Wpf.ViewModels"
+        xmlns:converters="clr-namespace:OpenSubtitleFetcher.Wpf.Helpers.Converters"
         mc:Ignorable="d"
         Title="OpenSubtitle fetcher" Height="450" Width="800" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}">
     <Window.Resources>
@@ -15,6 +16,16 @@
                 <x:Type TypeName="enums:Language"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="SelectionModeEnum" MethodName="GetValues"
+                            ObjectType="{x:Type system:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:SubtitleSelectionMode"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <converters:StatusToGlyphConverter x:Key="StatusToGlyphConverter"/>
+        <converters:StatusToBrushConverter x:Key="StatusToBrushConverter"/>
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -49,6 +60,19 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Header="Status" Width="60">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type viewModels:VideoFileViewModel}">
+                                    <TextBlock Margin="5,0"
+                                               Text="{Binding Status, Converter={StaticResource StatusToGlyphConverter}}"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrushConverter}}"
+                                               ToolTip="{Binding Status}"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -56,7 +80,10 @@
         <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
             <ComboBox ItemsSource="{Binding Source={StaticResource LanguageEnum}}"
                       SelectedItem="{Binding Language}" />
-            <Button Command="{Binding SubmitCommand}" Margin="10,0">Download</Button>
+            <ComboBox ItemsSource="{Binding Source={StaticResource SelectionModeEnum}}"
+                      SelectedItem="{Binding SelectionMode}"
+                      Margin="10, 0"/>
+            <Button Command="{Binding SubmitCommand}">Download</Button>
             <CheckBox IsChecked="{Binding OverwriteSubtitles}" VerticalAlignment="Center" Margin="10,0,0,0"/>
             <TextBlock Text="Overwrite existing subtitles" VerticalAlignment="Center"/>
         </WrapPanel>
