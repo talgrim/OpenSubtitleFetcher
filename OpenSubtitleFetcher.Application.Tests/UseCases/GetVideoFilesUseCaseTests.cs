@@ -23,6 +23,26 @@ public class GetVideoFilesUseCaseTests
         var result = useCase.GetVideoFiles(paths);
 
         // Assert
-        Assert.Same(files, result);
+        Assert.Equal(files, result);
+    }
+
+    [Fact]
+    public void GetVideoFiles_RemovesDuplicates_WhenSameFolderIsSelectedTwice()
+    {
+        // Arrange
+        string[] paths = [@"C:\Movies", @"C:\Movies"];
+        VideoFile film = new(@"C:\Movies\Film.mkv", "Film.mkv");
+        VideoFile other = new(@"C:\Movies\Other.mkv", "Other.mkv");
+
+        var repository = new Mock<IVideoFileRepository>();
+        repository.Setup(x => x.GetVideoFiles(paths)).Returns([film, other, film, other]);
+
+        var useCase = new GetVideoFilesUseCase(repository.Object);
+
+        // Act
+        var result = useCase.GetVideoFiles(paths);
+
+        // Assert
+        Assert.Equal([film, other], result);
     }
 }

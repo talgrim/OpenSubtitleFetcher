@@ -10,7 +10,10 @@ internal static class StaticMapper
     {
         return new SubtitleCandidate(
             response.Attributes!.DownloadCount,
-            response.Attributes.Files.Select(ToDomain).ToList());
+            response.Attributes.Files.Select(ToDomain).ToList(),
+            response.Attributes.FromTrusted ?? false,
+            response.Attributes.MachineTranslated ?? false,
+            response.Attributes.MoviehashMatch ?? false);
     }
 
     private static SubtitleCandidateFile ToDomain(FileDto response)

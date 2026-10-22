@@ -19,6 +19,9 @@ public class GetVideoFilesUseCase : IGetVideoFilesUseCase
 
     public IReadOnlyCollection<VideoFile> GetVideoFiles(IReadOnlyCollection<string> paths)
     {
-        return _videoFileRepository.GetVideoFiles(paths);
+        return _videoFileRepository
+            .GetVideoFiles(paths)
+            .DistinctBy(x => x.FilePath, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

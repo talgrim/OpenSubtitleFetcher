@@ -1,4 +1,4 @@
-namespace OpenSubtitleFetcher.Application.Models.Enums;
+namespace OpenSubtitleFetcher.Wpf.Helpers.Logging;
 
 public enum LogResult
 {
