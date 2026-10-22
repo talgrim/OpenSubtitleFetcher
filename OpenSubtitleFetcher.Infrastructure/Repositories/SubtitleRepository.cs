@@ -10,15 +10,13 @@ internal class SubtitleRepository : ISubtitleRepository
         return SubtitleFormat.SourceExtensions.Any(x => File.Exists(Path.ChangeExtension(filePath, x)));
     }
 
-    public async Task<string> SaveAsync(
+    public Task SaveAsync(
         string filePath,
         byte[] content,
         CancellationToken cancellationToken)
     {
         var subtitlesPath = Path.ChangeExtension(filePath,SubtitleFormat.DefaultExtension);
 
-        await File.WriteAllBytesAsync(subtitlesPath, content, cancellationToken);
-
-        return subtitlesPath;
+        return File.WriteAllBytesAsync(subtitlesPath, content, cancellationToken);
     }
 }

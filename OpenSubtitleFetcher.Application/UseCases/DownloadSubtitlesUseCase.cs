@@ -1,4 +1,4 @@
-using OpenSubtitleFetcher.Application.Abstractions.Logging;
+using System.Collections.Concurrent;
 using OpenSubtitleFetcher.Application.Abstractions.Providers;
 using OpenSubtitleFetcher.Application.Abstractions.Repositories;
 using OpenSubtitleFetcher.Application.Models.Enums;
@@ -14,6 +14,7 @@ public interface IDownloadSubtitlesUseCase
         IReadOnlyCollection<string> filePaths,
         Language language,
         bool overwriteExisting = true,
+        IProgress<FileDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -24,34 +25,31 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
     private readonly ISubtitlesProvider _provider;
     private readonly ISubtitleRepository _subtitleRepository;
-    private readonly ILogDisplay _logger;
 
     public DownloadSubtitlesUseCase(
         ISubtitlesProvider provider,
-        ISubtitleRepository subtitleRepository,
-        ILogDisplay logger)
+        ISubtitleRepository subtitleRepository)
     {
         _provider = provider;
         _subtitleRepository = subtitleRepository;
-        _logger = logger;
     }
 
     public async Task DownloadSubtitlesForFilesAsync(
         IReadOnlyCollection<string> filePaths,
         Language language,
         bool overwriteExisting = true,
+        IProgress<FileDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var pendingFiles = filePaths;
+        var pendingFiles = new ConcurrentDictionary<string, FileDownloadStatus>(
+            filePaths.ToDictionary(x => x, _ => FileDownloadStatus.Pending));
 
         if (!overwriteExisting)
         {
-            pendingFiles = pendingFiles.Where(x => !_subtitleRepository.HasSubtitles(x)).ToList();
-            var skippedCount = filePaths.Count - pendingFiles.Count;
-
-            if (skippedCount > 0)
+            foreach (var filePath in filePaths.Where(x => _subtitleRepository.HasSubtitles(x)))
             {
-                _logger.Log($"Skipped {skippedCount} file(s) that already have subtitles");
+                pendingFiles[filePath] = FileDownloadStatus.Skipped;
+                progress?.Report(new FileDownloadProgress(filePath, FileDownloadStatus.Skipped));
             }
         }
 
@@ -65,45 +63,57 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
         try
         {
-            await Parallel.ForEachAsync(pendingFiles, options, async (filePath, ct) =>
-            {
-                // CancelAsync propagates to the loop's token asynchronously, so check the source directly
-                if (quotaCts.IsCancellationRequested)
+            await Parallel.ForEachAsync(pendingFiles.Where(x => x.Value == FileDownloadStatus.Pending), options,
+                async (filePath, ct) =>
                 {
-                    return;
-                }
+                    // CancelAsync propagates to the loop's token asynchronously, so check the source directly
+                    if (quotaCts.IsCancellationRequested)
+                    {
+                        return;
+                    }
 
-                var canContinue = await DownloadForFileAsync(filePath, language, ct);
+                    pendingFiles[filePath.Key] = FileDownloadStatus.Searching;
 
-                if (!canContinue)
-                {
-                    await quotaCts.CancelAsync();
-                }
-            });
+                    var canContinue = await DownloadForFileAsync(filePath.Key, language, progress, ct);
 
-            _logger.Log($"Finished processing {pendingFiles.Count} file(s)", LogResult.Success);
+                    if (!canContinue)
+                    {
+                        await quotaCts.CancelAsync();
+                    }
+                });
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.Log("Download quota exhausted, remaining files were not processed", LogResult.Warning);
+            // Quota exhausted, remaining files are reported below
+        }
+
+        foreach (var (path, _) in pendingFiles.Where(x => x.Value == FileDownloadStatus.Pending))
+        {
+            progress?.Report(
+                new FileDownloadProgress(path, FileDownloadStatus.NotProcessed, "Download quota exhausted"));
         }
     }
 
     /// <returns><c>false</c> when the download quota is exhausted and no more files should be processed.</returns>
-    private async Task<bool> DownloadForFileAsync(string filePath, Language language, CancellationToken cancellationToken)
+    private async Task<bool> DownloadForFileAsync(
+        string filePath,
+        Language language,
+        IProgress<FileDownloadProgress>? progress,
+        CancellationToken cancellationToken)
     {
         var query = Path.GetFileName(filePath);
 
         try
         {
+            Report(FileDownloadStatus.Searching);
+
             var candidates = await _provider.SearchSubtitlesAsync(query, language, cancellationToken);
-            _logger.Log($"Fetched {candidates.Count} subtitles for {query}", LogResult.Success);
 
             var bestCandidate = SubtitleCandidate.GetBestCandidate(candidates);
 
             if (bestCandidate == null)
             {
-                _logger.Log($"No subtitles found for {query}", LogResult.Warning);
+                Report(FileDownloadStatus.NotFound);
                 return true;
             }
 
@@ -113,22 +123,29 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
             if (downloadResult.IsError)
             {
-                _logger.Log(
-                    $"Failed to acquire download link for {query}: {downloadResult.FirstError.Description}",
-                    LogResult.Error);
-
-                return downloadResult.FirstError.NumericType != (int)SubtitleDownloadErrorCode.QuotaExceeded;
+                switch ((SubtitleDownloadErrorCode)downloadResult.FirstError.NumericType)
+                {
+                    case SubtitleDownloadErrorCode.MissingLink:
+                        Report(FileDownloadStatus.Failed, downloadResult.FirstError.Description);
+                        return true;
+                    case SubtitleDownloadErrorCode.QuotaExceeded:
+                        Report(FileDownloadStatus.NotProcessed, downloadResult.FirstError.Description);
+                        return false;
+                    default:
+                        Report(FileDownloadStatus.Failed, downloadResult.FirstError.Description);
+                        return true;
+                }
             }
 
             var result = downloadResult.Value;
 
-            _logger.Log($"Acquired download link for subtitles {result.FileName} ({result.Remaining} downloads remaining)");
+            Report(FileDownloadStatus.Downloading);
 
             var content = await _provider.GetSubtitlesFileAsync(result.Link, cancellationToken);
 
-            var subtitlesPath = await _subtitleRepository.SaveAsync(filePath, content, cancellationToken);
+            await _subtitleRepository.SaveAsync(filePath, content, cancellationToken);
 
-            _logger.Log($"Saved subtitles to {subtitlesPath}", LogResult.Success);
+            Report(FileDownloadStatus.Downloaded, $"{result.Remaining} downloads remaining");
 
             return result.Remaining > 0;
         }
@@ -138,8 +155,13 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
         }
         catch (Exception ex)
         {
-            _logger.Log($"Failed to fetch subtitles for {query}: {ex.Message}", LogResult.Error);
+            Report(FileDownloadStatus.Failed, ex.Message);
             return true;
+        }
+
+        void Report(FileDownloadStatus status, string? details = null)
+        {
+            progress?.Report(new FileDownloadProgress(filePath, status, details));
         }
     }
 }

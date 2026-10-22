@@ -1,9 +1,13 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpenSubtitleFetcher.Application.Models.Enums;
+using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 using OpenSubtitleFetcher.Wpf.Helpers.FolderPicker;
+using OpenSubtitleFetcher.Wpf.Helpers.Logging;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;
 
@@ -89,9 +93,46 @@ public partial class MainWindowViewModel : ObservableObject
 
     private async Task Submit()
     {
-        var filePaths = FileList.Where(x => x.IsChecked).Select(x => x.FilePath).ToList();
+        foreach (var file in FileList)
+        {
+            file.Status = file.IsChecked ? FileDownloadStatus.Pending : null;
+        }
+
+        var rows = FileList.Where(x => x.IsChecked).ToDictionary(x => x.FilePath);
+
+        var progress = new Progress<FileDownloadProgress>(p =>
+        {
+            rows[p.FilePath].Status = p.Status;
+            LogProgress(p);
+        });
 
         await Task.Run(() =>
-            _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, OverwriteSubtitles));
+            _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(
+                rows.Keys.ToList(),
+                Language,
+                OverwriteSubtitles,
+                progress));
+
+        Logs.Log($"Finished processing {rows.Count} file(s)");
+    }
+
+    private void LogProgress(FileDownloadProgress file)
+    {
+        var message = $"Status update for file {Path.GetFileName(file.FilePath)}: {file.Status}";
+
+        if (file.Details is not null)
+        {
+            message += $" ({file.Details})";
+        }
+
+        var result = file.Status switch
+        {
+            FileDownloadStatus.Downloaded => LogResult.Success,
+            FileDownloadStatus.NotProcessed or FileDownloadStatus.NotFound => LogResult.Warning,
+            FileDownloadStatus.Failed => LogResult.Error,
+            _ => LogResult.Info
+        };
+
+        Logs.Log(message, result);
     }
 }

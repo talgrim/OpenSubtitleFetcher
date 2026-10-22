@@ -1,7 +1,6 @@
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
-using OpenSubtitleFetcher.Application.Abstractions.Logging;
-using OpenSubtitleFetcher.Application.Models.Enums;
+using OpenSubtitleFetcher.Wpf.Helpers.Logging;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;

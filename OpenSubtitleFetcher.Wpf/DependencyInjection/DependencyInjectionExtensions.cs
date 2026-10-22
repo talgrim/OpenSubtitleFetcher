@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using OpenSubtitleFetcher.Application.Abstractions.Logging;
 using OpenSubtitleFetcher.Wpf.Helpers.FolderPicker;
+using OpenSubtitleFetcher.Wpf.Helpers.Logging;
 using OpenSubtitleFetcher.Wpf.ViewModels;
 
 namespace OpenSubtitleFetcher.Wpf.DependencyInjection;
