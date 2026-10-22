@@ -4,7 +4,7 @@ using OpenSubtitleFetcher.Application.Abstractions.Repositories;
 using OpenSubtitleFetcher.Application.Models.Enums;
 using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Enums;
-using OpenSubtitleFetcher.Domain.Models.Subtitles;
+using OpenSubtitleFetcher.Domain.Models.Subtitles.Selection;
 
 namespace OpenSubtitleFetcher.Application.UseCases;
 
@@ -13,6 +13,7 @@ public interface IDownloadSubtitlesUseCase
     public Task DownloadSubtitlesForFilesAsync(
         IReadOnlyCollection<string> filePaths,
         Language language,
+        SubtitleSelectionMode selectionMode,
         bool overwriteExisting = true,
         IProgress<FileDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default);
@@ -25,22 +26,29 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
     private readonly ISubtitlesProvider _provider;
     private readonly ISubtitleRepository _subtitleRepository;
+    private readonly Dictionary<SubtitleSelectionMode, ISubtitleSelectionStrategy> _strategies;
 
     public DownloadSubtitlesUseCase(
         ISubtitlesProvider provider,
-        ISubtitleRepository subtitleRepository)
+        ISubtitleRepository subtitleRepository,
+        IEnumerable<ISubtitleSelectionStrategy> strategies)
     {
         _provider = provider;
         _subtitleRepository = subtitleRepository;
+
+        _strategies = strategies.ToDictionary(x => x.Mode);
     }
 
     public async Task DownloadSubtitlesForFilesAsync(
         IReadOnlyCollection<string> filePaths,
         Language language,
+        SubtitleSelectionMode selectionMode,
         bool overwriteExisting = true,
         IProgress<FileDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        var strategy =  _strategies[selectionMode];
+
         var pendingFiles = new ConcurrentDictionary<string, FileDownloadStatus>(
             filePaths.ToDictionary(x => x, _ => FileDownloadStatus.Pending));
 
@@ -74,7 +82,7 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
                     pendingFiles[filePath.Key] = FileDownloadStatus.Searching;
 
-                    var canContinue = await DownloadForFileAsync(filePath.Key, language, progress, ct);
+                    var canContinue = await DownloadForFileAsync(filePath.Key, language, strategy, progress, ct);
 
                     if (!canContinue)
                     {
@@ -98,6 +106,7 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
     private async Task<bool> DownloadForFileAsync(
         string filePath,
         Language language,
+        ISubtitleSelectionStrategy strategy,
         IProgress<FileDownloadProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -109,7 +118,7 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
             var candidates = await _provider.SearchSubtitlesAsync(query, language, cancellationToken);
 
-            var bestCandidate = SubtitleCandidate.GetBestCandidate(candidates);
+            var bestCandidate = strategy.Select(candidates);
 
             if (bestCandidate == null)
             {

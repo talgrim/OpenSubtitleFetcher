@@ -2,6 +2,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Domain;
 using OpenSubtitleFetcher.Infrastructure;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
@@ -29,6 +30,7 @@ public static class CompositionRoot
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IUiContext, DefaultContext>();
+        services.RegisterDomain();
         services.RegisterWpf();
         services.RegisterInfrastructure();
         services.RegisterOpenSubtitlesApi(configuration);
