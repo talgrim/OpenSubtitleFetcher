@@ -9,7 +9,8 @@ public static class DependencyInjectionExtensions
 {
     public static void RegisterApplication(this IServiceCollection services)
     {
-        services.AddScoped<IDownloadSubtitlesUseCase, DownloadSubtitlesUseCase>();
         services.AddSingleton<ILogManager, LogManager>();
+        services.AddTransient<IDownloadSubtitlesUseCase, DownloadSubtitlesUseCase>();
+        services.AddTransient<IGetVideoFilesUseCase, GetVideoFilesUseCase>();
     }
 }

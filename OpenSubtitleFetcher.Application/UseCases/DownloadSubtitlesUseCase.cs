@@ -124,7 +124,7 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
             var content = await _provider.GetSubtitlesFileAsync(result.Link, cancellationToken);
 
-            var subtitlesPath = await _subtitleRepository.SaveAsync(result.FileName, content, cancellationToken);
+            var subtitlesPath = await _subtitleRepository.SaveAsync(filePath, content, cancellationToken);
 
             _logger.Log($"Saved subtitles to {subtitlesPath}", LogResult.Success);
 

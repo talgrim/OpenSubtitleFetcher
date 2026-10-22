@@ -3,8 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
 using OpenSubtitleFetcher.Application.Abstractions.Logging;
-using OpenSubtitleFetcher.Application.Logging;
-using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Infrastructure;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;

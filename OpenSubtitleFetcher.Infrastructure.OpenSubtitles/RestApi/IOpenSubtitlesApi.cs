@@ -1,9 +1,12 @@
+using System.Runtime.CompilerServices;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 using RestEase;
 
+[assembly: InternalsVisibleTo(RestClient.FactoryAssemblyName)]
+
 namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.RestApi;
 
-public interface IOpenSubtitlesApi
+internal interface IOpenSubtitlesApi
 {
     [Header("Api-Key")]
     string ApiKey { get; set; }

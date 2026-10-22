@@ -1,6 +1,6 @@
 namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 
-public class DataAttributesDto
+internal class DataAttributesDto
 {
     public string Language { get; set; }
     public int DownloadCount { get; set; }

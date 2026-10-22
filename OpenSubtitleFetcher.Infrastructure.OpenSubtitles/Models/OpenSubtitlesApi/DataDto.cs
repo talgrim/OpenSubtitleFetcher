@@ -1,6 +1,6 @@
 namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 
-public class DataDto
+internal class DataDto
 {
     public string Id { get; set; }
     public string Type { get; set; }

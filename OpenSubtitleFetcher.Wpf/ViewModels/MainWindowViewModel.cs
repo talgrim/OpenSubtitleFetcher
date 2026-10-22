@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using OpenSubtitleFetcher.Application.Abstractions.Logging;
-using OpenSubtitleFetcher.Application.Abstractions.Repositories;
 using OpenSubtitleFetcher.Application.Models.Enums;
 using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
@@ -15,7 +14,7 @@ namespace OpenSubtitleFetcher.Wpf.ViewModels;
 public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 {
     private readonly IDownloadSubtitlesUseCase _downloadSubtitlesUseCase;
-    private readonly IVideoFileRepository _videoFileRepository;
+    private readonly IGetVideoFilesUseCase _getVideoFilesUseCase;
     private readonly StringBuilder _stringBuilder = new();
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
@@ -41,10 +40,10 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
     public MainWindowViewModel(
         IDownloadSubtitlesUseCase downloadSubtitlesUseCase,
-        IVideoFileRepository videoFileRepository)
+        IGetVideoFilesUseCase getVideoFilesUseCase)
     {
         _downloadSubtitlesUseCase = downloadSubtitlesUseCase;
-        _videoFileRepository = videoFileRepository;
+        _getVideoFilesUseCase = getVideoFilesUseCase;
 
         SelectDirectoriesCommand = new RelayCommand(SelectDirectories);
         GetFilesCommand = new RelayCommand(GetFiles, CanGetFiles);
@@ -73,7 +72,7 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var urls = Urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        var files = _videoFileRepository.GetVideoFiles(urls);
+        var files = _getVideoFilesUseCase.GetVideoFiles(urls);
 
         FileList.Clear();
         foreach (var file in files)

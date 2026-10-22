@@ -1,5 +1,4 @@
 using OpenSubtitleFetcher.Application.Models.Enums;
-using OpenSubtitleFetcher.Domain.Models.Enums;
 
 namespace OpenSubtitleFetcher.Application.Abstractions.Logging;
 
