@@ -1,6 +1,7 @@
+using OpenSubtitleFetcher.Application.Models.Enums;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 
-namespace OpenSubtitleFetcher.Infrastructure.Logging;
+namespace OpenSubtitleFetcher.Application.Abstractions.Logging;
 
 public interface ILogDisplay
 {

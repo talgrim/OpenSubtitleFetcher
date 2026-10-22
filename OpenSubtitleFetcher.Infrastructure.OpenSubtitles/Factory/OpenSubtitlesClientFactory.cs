@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using OpenSubtitleFetcher.Infrastructure.RestApi;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.RestApi;
 using RestEase;
 
 namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;

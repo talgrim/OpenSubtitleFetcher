@@ -1,7 +1,7 @@
-using OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 using RestEase;
 
-namespace OpenSubtitleFetcher.Infrastructure.RestApi;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.RestApi;
 
 public interface IOpenSubtitlesApi
 {

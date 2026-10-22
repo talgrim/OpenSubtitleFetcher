@@ -1,4 +1,4 @@
-namespace OpenSubtitleFetcher.Infrastructure.RestApi;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
 
 public class OpenSubtitlesSettings
 {

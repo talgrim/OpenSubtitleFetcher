@@ -1,4 +1,4 @@
-namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 
 public class SearchSubtitlesResponseDto
 {

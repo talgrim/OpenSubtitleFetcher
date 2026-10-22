@@ -1,21 +1,21 @@
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Application.Abstractions.Logging;
+using OpenSubtitleFetcher.Application.Abstractions.Repositories;
+using OpenSubtitleFetcher.Application.Models.Enums;
+using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
-using OpenSubtitleFetcher.Infrastructure.Logging;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 {
-    private static readonly HashSet<string> VideoFilesExtensions = [".mp4", " .avi", ".mkv"];
-    private readonly ITemp _temp;
+    private readonly IDownloadSubtitlesUseCase _downloadSubtitlesUseCase;
+    private readonly IVideoFileRepository _videoFileRepository;
     private readonly StringBuilder _stringBuilder = new();
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
@@ -38,9 +38,12 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     public RelayCommand GetFilesCommand { get; }
     public AsyncRelayCommand SubmitCommand { get; }
 
-    public MainWindowViewModel(ITemp temp)
+    public MainWindowViewModel(
+        IDownloadSubtitlesUseCase downloadSubtitlesUseCase,
+        IVideoFileRepository videoFileRepository)
     {
-        _temp = temp;
+        _downloadSubtitlesUseCase = downloadSubtitlesUseCase;
+        _videoFileRepository = videoFileRepository;
 
         SelectDirectoriesCommand = new RelayCommand(SelectDirectories);
         GetFilesCommand = new RelayCommand(GetFiles, CanGetFiles);
@@ -69,27 +72,13 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var urls = Urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        var bag = new ConcurrentBag<VideoFileViewModel>();
+        var files = _videoFileRepository.GetVideoFiles(urls);
 
-        Parallel.ForEach(urls, url =>
+        FileList.Clear();
+        foreach (var file in files)
         {
-            var directoryInfo = new DirectoryInfo(url);
-            var files = directoryInfo
-                .EnumerateFiles()
-                .Where(x => VideoFilesExtensions.Contains(x.Extension));
-
-            foreach (var file in files)
-            {
-                bag.Add(new VideoFileViewModel(file.FullName, file.Name));
-            }
-        });
-
-        UiContext.Invoke(() =>
-        {
-            FileList.Clear();
-            foreach (var file in bag)
-                FileList.Add(file);
-        });
+            FileList.Add(new VideoFileViewModel(file.FilePath, file.FileName));
+        }
 
         Log($"Loaded {FileList.Count} file(s)");
 
@@ -105,7 +94,7 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var filePaths = FileList.Where(x => x.IsChecked).Select(x => x.FilePath).ToList();
 
-        await Task.Run(() => _temp.TestAsync(filePaths, Language));
+        await Task.Run(() => _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, false));
     }
 
     public void Log(string message, LogResult logLevel = LogResult.Info)

@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Application.Abstractions.Logging;
 using OpenSubtitleFetcher.Application.Logging;
-using OpenSubtitleFetcher.Infrastructure.Logging;
+using OpenSubtitleFetcher.Application.UseCases;
+using OpenSubtitleFetcher.Infrastructure;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 using OpenSubtitleFetcher.Wpf.ViewModels;
@@ -36,7 +38,8 @@ public partial class App
 
         var mainWindowVM = ServiceProvider.GetRequiredService<ILogDisplay>();
 
-        LogManager.Initialize(mainWindowVM);
+        var logManager = ServiceProvider.GetRequiredService<ILogManager>();
+        logManager.Initialize(mainWindowVM);
 
         var mainWindow = new MainWindow
         {
@@ -49,9 +52,9 @@ public partial class App
     {
         services.AddSingleton<ILogDisplay, MainWindowViewModel>();
 
+        services.RegisterInfrastructure();
         services.RegisterOpenSubtitlesApi(Configuration);
         services.RegisterApplication();
-        services.AddScoped<ITemp, Temp>();
     }
 }
 
