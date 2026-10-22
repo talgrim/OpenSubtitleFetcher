@@ -10,4 +10,7 @@ internal class DataAttributesDto
     public bool? MachineTranslated { get; set; }
     public string Url { get; set; }
     public FileDto[] Files { get; set; } = [];
+
+    // ReSharper disable once IdentifierTypo - name is compatible with OpenSubtitles
+    public bool? MoviehashMatch { get; set; }
 }

@@ -8,7 +8,8 @@ public class BestMatchStrategy : SubtitleSelectionStrategyBase
 
     protected override IEnumerable<SubtitleCandidate> Order(IEnumerable<SubtitleCandidate> candidates)
     {
-        return candidates.OrderBy(x => x.MachineTranslated)
+        return candidates.OrderByDescending(x => x.MovieHashMatch)
+            .ThenBy(x => x.MachineTranslated)
             .ThenByDescending(x => x.FromTrusted)
             .ThenByDescending(x => x.DownloadCount);
     }

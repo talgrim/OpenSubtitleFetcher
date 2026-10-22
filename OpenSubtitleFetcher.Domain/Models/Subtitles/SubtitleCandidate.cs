@@ -5,4 +5,4 @@ public record SubtitleCandidate(
     IReadOnlyCollection<SubtitleCandidateFile> Files,
     bool FromTrusted = false,
     bool MachineTranslated = false,
-    double? Fps = null);
+    bool MovieHashMatch = false);

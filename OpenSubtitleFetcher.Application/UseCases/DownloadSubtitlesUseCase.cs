@@ -47,7 +47,7 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
         IProgress<FileDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var strategy =  _strategies[selectionMode];
+        var strategy = _strategies[selectionMode];
 
         var pendingFiles = new ConcurrentDictionary<string, FileDownloadStatus>(
             filePaths.ToDictionary(x => x, _ => FileDownloadStatus.Pending));
@@ -110,13 +110,11 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
         IProgress<FileDownloadProgress>? progress,
         CancellationToken cancellationToken)
     {
-        var query = Path.GetFileName(filePath);
-
         try
         {
             Report(FileDownloadStatus.Searching);
 
-            var candidates = await _provider.SearchSubtitlesAsync(query, language, cancellationToken);
+            var candidates = await _provider.SearchSubtitlesAsync(filePath, language, cancellationToken);
 
             var bestCandidate = strategy.Select(candidates);
 

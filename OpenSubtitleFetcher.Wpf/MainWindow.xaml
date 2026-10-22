@@ -17,7 +17,7 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
-        <ObjectDataProvider x:Key="StrategyEnum" MethodName="GetValues"
+        <ObjectDataProvider x:Key="SelectionModeEnum" MethodName="GetValues"
                             ObjectType="{x:Type system:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="enums:SubtitleSelectionMode"/>
@@ -80,8 +80,8 @@
         <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
             <ComboBox ItemsSource="{Binding Source={StaticResource LanguageEnum}}"
                       SelectedItem="{Binding Language}" />
-            <ComboBox ItemsSource="{Binding Source={StaticResource StrategyEnum}}"
-                      SelectedItem="{Binding Strategy}"
+            <ComboBox ItemsSource="{Binding Source={StaticResource SelectionModeEnum}}"
+                      SelectedItem="{Binding SelectionMode}"
                       Margin="10, 0"/>
             <Button Command="{Binding SubmitCommand}">Download</Button>
             <CheckBox IsChecked="{Binding OverwriteSubtitles}" VerticalAlignment="Center" Margin="10,0,0,0"/>

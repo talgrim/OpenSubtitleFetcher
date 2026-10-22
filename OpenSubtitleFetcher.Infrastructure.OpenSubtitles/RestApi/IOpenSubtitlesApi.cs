@@ -18,6 +18,7 @@ internal interface IOpenSubtitlesApi
     Task<SearchSubtitlesResponseDto> SearchSubtitlesAsync(
         string query,
         string languages,
+        string? moviehash,
         CancellationToken cancellationToken = default);
 
     [Post("/download")]

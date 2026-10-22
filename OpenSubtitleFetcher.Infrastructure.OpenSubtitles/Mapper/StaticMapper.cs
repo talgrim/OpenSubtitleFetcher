@@ -13,7 +13,7 @@ internal static class StaticMapper
             response.Attributes.Files.Select(ToDomain).ToList(),
             response.Attributes.FromTrusted ?? false,
             response.Attributes.MachineTranslated ?? false,
-            response.Attributes.Fps);
+            response.Attributes.MoviehashMatch ?? false);
     }
 
     private static SubtitleCandidateFile ToDomain(FileDto response)

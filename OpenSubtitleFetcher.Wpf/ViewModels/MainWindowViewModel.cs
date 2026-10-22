@@ -18,7 +18,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IFolderPicker _folderPicker;
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
-    [ObservableProperty] public partial SubtitleSelectionMode Strategy { get; set; } = SubtitleSelectionMode.BestMatch;
+    [ObservableProperty] public partial SubtitleSelectionMode SelectionMode { get; set; } = SubtitleSelectionMode.BestMatch;
 
     public string Urls
     {
@@ -111,7 +111,7 @@ public partial class MainWindowViewModel : ObservableObject
             _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(
                 rows.Keys.ToList(),
                 Language,
-                Strategy,
+                SelectionMode,
                 OverwriteSubtitles,
                 progress));
 

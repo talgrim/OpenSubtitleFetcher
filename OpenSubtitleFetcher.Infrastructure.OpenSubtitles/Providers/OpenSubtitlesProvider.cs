@@ -5,6 +5,7 @@ using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 using OpenSubtitleFetcher.Domain.Models.Subtitles;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Hashing;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Mapper;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 using RestEase;
@@ -28,13 +29,16 @@ internal class OpenSubtitlesProvider : ISubtitlesProvider
     }
 
     public async Task<IReadOnlyCollection<SubtitleCandidate>> SearchSubtitlesAsync(
-        string query,
+        string videoFilePath,
         Language language,
         CancellationToken cancellationToken = default)
     {
+        var movieHash = await TryComputeMovieHashAsync(videoFilePath, cancellationToken);
+        var query = Path.GetFileName(videoFilePath);
+
         var client = _factory.CreateRestClient();
 
-        var response = await client.SearchSubtitlesAsync(query, _languagesMap[language], cancellationToken);
+        var response = await client.SearchSubtitlesAsync(query, _languagesMap[language], movieHash, cancellationToken);
 
         return response.Data.Select(StaticMapper.ToDomain).ToList();
     }
@@ -77,5 +81,21 @@ internal class OpenSubtitlesProvider : ISubtitlesProvider
         var client = _factory.CreateHttpClient();
 
         return client.GetByteArrayAsync(link, cancellationToken);
+    }
+
+    private static async Task<string?> TryComputeMovieHashAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await MovieHash.ComputeAsync(path, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
     }
 }
