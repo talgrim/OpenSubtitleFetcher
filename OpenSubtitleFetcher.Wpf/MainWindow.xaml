@@ -56,7 +56,9 @@
         <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
             <ComboBox ItemsSource="{Binding Source={StaticResource LanguageEnum}}"
                       SelectedItem="{Binding Language}" />
-            <Button Margin="10,0" Command="{Binding SubmitCommand}">Download</Button>
+            <Button Command="{Binding SubmitCommand}" Margin="10,0">Download</Button>
+            <CheckBox IsChecked="{Binding OverwriteSubtitles}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            <TextBlock Text="Overwrite existing subtitles" VerticalAlignment="Center"/>
         </WrapPanel>
         <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0, 10" BorderThickness="1" BorderBrush="Black">
             <ScrollViewer>

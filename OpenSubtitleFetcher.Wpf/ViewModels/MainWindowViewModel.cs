@@ -33,6 +33,7 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     public ObservableCollection<VideoFileViewModel> FileList { get; set; } = [];
 
     [ObservableProperty] public partial string LogBlock { get; set; } = string.Empty;
+    [ObservableProperty] public partial bool OverwriteSubtitles { get; set; } = false;
 
     public RelayCommand SelectDirectoriesCommand { get; }
     public RelayCommand GetFilesCommand { get; }
@@ -94,7 +95,8 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var filePaths = FileList.Where(x => x.IsChecked).Select(x => x.FilePath).ToList();
 
-        await Task.Run(() => _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, false));
+        await Task.Run(() =>
+            _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, OverwriteSubtitles));
     }
 
     public void Log(string message, LogResult logLevel = LogResult.Info)

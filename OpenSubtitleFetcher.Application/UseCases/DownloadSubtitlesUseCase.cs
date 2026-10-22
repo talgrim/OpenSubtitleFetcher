@@ -12,7 +12,7 @@ public interface IDownloadSubtitlesUseCase
     public Task DownloadSubtitlesForFilesAsync(
         IReadOnlyCollection<string> filePaths,
         Language language,
-        bool skipExisting = true,
+        bool overwriteExisting = true,
         CancellationToken cancellationToken = default);
 }
 
@@ -38,12 +38,12 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
     public async Task DownloadSubtitlesForFilesAsync(
         IReadOnlyCollection<string> filePaths,
         Language language,
-        bool skipExisting = true,
+        bool overwriteExisting = true,
         CancellationToken cancellationToken = default)
     {
         var pendingFiles = filePaths;
 
-        if (skipExisting)
+        if (!overwriteExisting)
         {
             pendingFiles = pendingFiles.Where(x => !_subtitleRepository.HasSubtitles(x)).ToList();
             var skippedCount = filePaths.Count - pendingFiles.Count;
