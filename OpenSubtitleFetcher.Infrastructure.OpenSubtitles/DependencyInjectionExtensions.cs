@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenSubtitleFetcher.Application.Abstractions.Providers;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Http;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
-using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.RestApi.V1;
-using OpenSubtitleFetcher.Infrastructure.RestApi;
+using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Providers;
 
 namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 
@@ -25,6 +25,6 @@ public static class DependencyInjectionExtensions
             })
             .AddHttpMessageHandler<ThrottlingHandler>();
         services.AddSingleton<IOpenSubtitlesClientFactory, OpenSubtitlesClientFactory>();
-        services.AddSingleton<IOpenSubtitlesService, OpenSubtitlesService>();
+        services.AddSingleton<ISubtitlesProvider, OpenSubtitlesProvider>();
     }
 }

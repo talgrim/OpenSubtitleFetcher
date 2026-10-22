@@ -1,6 +1,6 @@
-namespace OpenSubtitleFetcher.Infrastructure.Models.OpenSubtitlesApi;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 
-public class DownloadSubtitlesResponseDto
+internal class DownloadSubtitlesResponseDto
 {
     public string Link { get; set; }
     public string FileName { get; set; }

@@ -1,6 +1,6 @@
-namespace OpenSubtitleFetcher.Infrastructure.RestApi;
+namespace OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models;
 
-public class OpenSubtitlesSettings
+internal class OpenSubtitlesSettings
 {
     public required string ApiKey { get; set; }
     public required string Url { get; set; }

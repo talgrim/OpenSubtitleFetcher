@@ -1,22 +1,16 @@
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using OpenSubtitleFetcher.Application;
+using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
-using OpenSubtitleFetcher.Infrastructure.Logging;
-using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject, ILogDisplay
+public partial class MainWindowViewModel : ObservableObject
 {
-    private static readonly HashSet<string> VideoFilesExtensions = [".mp4", " .avi", ".mkv"];
-    private readonly ITemp _temp;
-    private readonly StringBuilder _stringBuilder = new();
+    private readonly IDownloadSubtitlesUseCase _downloadSubtitlesUseCase;
+    private readonly IGetVideoFilesUseCase _getVideoFilesUseCase;
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
 
@@ -32,15 +26,22 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
     public ObservableCollection<VideoFileViewModel> FileList { get; set; } = [];
 
-    [ObservableProperty] public partial string LogBlock { get; set; } = string.Empty;
+    [ObservableProperty] public partial bool OverwriteSubtitles { get; set; } = false;
+
+    public LogViewModel Logs { get; }
 
     public RelayCommand SelectDirectoriesCommand { get; }
     public RelayCommand GetFilesCommand { get; }
     public AsyncRelayCommand SubmitCommand { get; }
 
-    public MainWindowViewModel(ITemp temp)
+    public MainWindowViewModel(
+        IDownloadSubtitlesUseCase downloadSubtitlesUseCase,
+        IGetVideoFilesUseCase getVideoFilesUseCase,
+        LogViewModel logs)
     {
-        _temp = temp;
+        _downloadSubtitlesUseCase = downloadSubtitlesUseCase;
+        _getVideoFilesUseCase = getVideoFilesUseCase;
+        Logs = logs;
 
         SelectDirectoriesCommand = new RelayCommand(SelectDirectories);
         GetFilesCommand = new RelayCommand(GetFiles, CanGetFiles);
@@ -69,29 +70,15 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var urls = Urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        var bag = new ConcurrentBag<VideoFileViewModel>();
+        var files = _getVideoFilesUseCase.GetVideoFiles(urls);
 
-        Parallel.ForEach(urls, url =>
+        FileList.Clear();
+        foreach (var file in files)
         {
-            var directoryInfo = new DirectoryInfo(url);
-            var files = directoryInfo
-                .EnumerateFiles()
-                .Where(x => VideoFilesExtensions.Contains(x.Extension));
+            FileList.Add(new VideoFileViewModel(file.FilePath, file.FileName));
+        }
 
-            foreach (var file in files)
-            {
-                bag.Add(new VideoFileViewModel(file.FullName, file.Name));
-            }
-        });
-
-        UiContext.Invoke(() =>
-        {
-            FileList.Clear();
-            foreach (var file in bag)
-                FileList.Add(file);
-        });
-
-        Log($"Loaded {FileList.Count} file(s)");
+        Logs.Log($"Loaded {FileList.Count} file(s)");
 
         SubmitCommand.NotifyCanExecuteChanged();
     }
@@ -105,20 +92,7 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
     {
         var filePaths = FileList.Where(x => x.IsChecked).Select(x => x.FilePath).ToList();
 
-        await Task.Run(() => _temp.TestAsync(filePaths, Language));
-    }
-
-    public void Log(string message, LogResult logLevel = LogResult.Info)
-    {
-        string log;
-
-        // Log is called from parallel downloads
-        lock (_stringBuilder)
-        {
-            _stringBuilder.AppendLine($"{DateTime.Now}: [{logLevel}] - {message}");
-            log = _stringBuilder.ToString();
-        }
-
-        UiContext.Invoke(() => LogBlock = log);
+        await Task.Run(() =>
+            _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, OverwriteSubtitles));
     }
 }
