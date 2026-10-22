@@ -1,21 +1,16 @@
 using System.Collections.ObjectModel;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using OpenSubtitleFetcher.Application.Abstractions.Logging;
-using OpenSubtitleFetcher.Application.Models.Enums;
 using OpenSubtitleFetcher.Application.UseCases;
 using OpenSubtitleFetcher.Domain.Models.Enums;
-using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;
 
 namespace OpenSubtitleFetcher.Wpf.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject, ILogDisplay
+public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IDownloadSubtitlesUseCase _downloadSubtitlesUseCase;
     private readonly IGetVideoFilesUseCase _getVideoFilesUseCase;
-    private readonly StringBuilder _stringBuilder = new();
 
     [ObservableProperty] public partial Language Language { get; set; } = Language.Polish;
 
@@ -31,8 +26,9 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
     public ObservableCollection<VideoFileViewModel> FileList { get; set; } = [];
 
-    [ObservableProperty] public partial string LogBlock { get; set; } = string.Empty;
     [ObservableProperty] public partial bool OverwriteSubtitles { get; set; } = false;
+
+    public LogViewModel Logs { get; }
 
     public RelayCommand SelectDirectoriesCommand { get; }
     public RelayCommand GetFilesCommand { get; }
@@ -40,10 +36,12 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
     public MainWindowViewModel(
         IDownloadSubtitlesUseCase downloadSubtitlesUseCase,
-        IGetVideoFilesUseCase getVideoFilesUseCase)
+        IGetVideoFilesUseCase getVideoFilesUseCase,
+        LogViewModel logs)
     {
         _downloadSubtitlesUseCase = downloadSubtitlesUseCase;
         _getVideoFilesUseCase = getVideoFilesUseCase;
+        Logs = logs;
 
         SelectDirectoriesCommand = new RelayCommand(SelectDirectories);
         GetFilesCommand = new RelayCommand(GetFiles, CanGetFiles);
@@ -80,7 +78,7 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
             FileList.Add(new VideoFileViewModel(file.FilePath, file.FileName));
         }
 
-        Log($"Loaded {FileList.Count} file(s)");
+        Logs.Log($"Loaded {FileList.Count} file(s)");
 
         SubmitCommand.NotifyCanExecuteChanged();
     }
@@ -96,19 +94,5 @@ public partial class MainWindowViewModel : ObservableObject, ILogDisplay
 
         await Task.Run(() =>
             _downloadSubtitlesUseCase.DownloadSubtitlesForFilesAsync(filePaths, Language, OverwriteSubtitles));
-    }
-
-    public void Log(string message, LogResult logLevel = LogResult.Info)
-    {
-        string log;
-
-        // Log is called from parallel downloads
-        lock (_stringBuilder)
-        {
-            _stringBuilder.AppendLine($"{DateTime.Now}: [{logLevel}] - {message}");
-            log = _stringBuilder.ToString();
-        }
-
-        UiContext.Invoke(() => LogBlock = log);
     }
 }

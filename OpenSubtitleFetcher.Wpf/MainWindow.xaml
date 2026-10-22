@@ -62,7 +62,7 @@
         </WrapPanel>
         <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0, 10" BorderThickness="1" BorderBrush="Black">
             <ScrollViewer>
-                <TextBlock VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Text="{Binding LogBlock}" />
+                <TextBlock VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Text="{Binding Logs.LogBlock}" />
             </ScrollViewer>
         </Border>
     </Grid>

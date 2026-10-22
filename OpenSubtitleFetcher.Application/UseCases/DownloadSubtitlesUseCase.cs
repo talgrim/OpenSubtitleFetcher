@@ -23,12 +23,12 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
 
     private readonly ISubtitlesProvider _provider;
     private readonly ISubtitleRepository _subtitleRepository;
-    private readonly ILogManager _logger;
+    private readonly ILogDisplay _logger;
 
     public DownloadSubtitlesUseCase(
         ISubtitlesProvider provider,
         ISubtitleRepository subtitleRepository,
-        ILogManager logger)
+        ILogDisplay logger)
     {
         _provider = provider;
         _subtitleRepository = subtitleRepository;

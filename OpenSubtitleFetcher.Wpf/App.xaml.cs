@@ -34,10 +34,7 @@ public partial class App
 
         ServiceProvider = serviceCollection.BuildServiceProvider();
 
-        var mainWindowVM = ServiceProvider.GetRequiredService<ILogDisplay>();
-
-        var logManager = ServiceProvider.GetRequiredService<ILogManager>();
-        logManager.Initialize(mainWindowVM);
+        var mainWindowVM = ServiceProvider.GetRequiredService<MainWindowViewModel>();
 
         var mainWindow = new MainWindow
         {
@@ -48,7 +45,9 @@ public partial class App
 
     private void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<ILogDisplay, MainWindowViewModel>();
+        services.AddSingleton<LogViewModel>();
+        services.AddSingleton<ILogDisplay>(sp => sp.GetRequiredService<LogViewModel>());
+        services.AddSingleton<MainWindowViewModel>();
 
         services.RegisterInfrastructure();
         services.RegisterOpenSubtitlesApi(Configuration);
