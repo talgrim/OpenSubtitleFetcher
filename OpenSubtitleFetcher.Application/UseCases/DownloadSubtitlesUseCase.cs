@@ -67,6 +67,12 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
         {
             await Parallel.ForEachAsync(pendingFiles, options, async (filePath, ct) =>
             {
+                // CancelAsync propagates to the loop's token asynchronously, so check the source directly
+                if (quotaCts.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 var canContinue = await DownloadForFileAsync(filePath, language, ct);
 
                 if (!canContinue)

@@ -55,8 +55,8 @@ internal class OpenSubtitlesProvider : ISubtitlesProvider
             if (string.IsNullOrEmpty(response.Link))
             {
                 return Error.Custom(
-                    (int)SubtitleDownloadErrorCode.MisingLink,
-                    nameof(SubtitleDownloadErrorCode.MisingLink),
+                    (int)SubtitleDownloadErrorCode.MissingLink,
+                    nameof(SubtitleDownloadErrorCode.MissingLink),
                     "Subtitles are missing link");
             }
 

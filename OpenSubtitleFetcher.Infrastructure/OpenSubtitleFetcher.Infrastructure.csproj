@@ -15,4 +15,8 @@
       <ProjectReference Include="..\OpenSubtitleFetcher.Domain\OpenSubtitleFetcher.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="OpenSubtitleFetcher.Infrastructure.Tests" />
+    </ItemGroup>
+
 </Project>
