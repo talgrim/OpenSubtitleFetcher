@@ -2,7 +2,6 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSubtitleFetcher.Application;
-using OpenSubtitleFetcher.Domain;
 using OpenSubtitleFetcher.Infrastructure;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles;
 using OpenSubtitleFetcher.Wpf.Helpers.UiContexts;

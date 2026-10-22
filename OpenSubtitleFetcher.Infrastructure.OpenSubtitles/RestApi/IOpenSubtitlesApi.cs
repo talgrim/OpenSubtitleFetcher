@@ -14,11 +14,12 @@ internal interface IOpenSubtitlesApi
     [Header("User-Agent")]
     string UserAgent { get; set; }
 
+    // Parameters are declared alphabetically, as the API redirects requests with unsorted query parameters
     [Get("/subtitles")]
     Task<SearchSubtitlesResponseDto> SearchSubtitlesAsync(
-        string query,
         string languages,
         string? moviehash,
+        string query,
         CancellationToken cancellationToken = default);
 
     [Post("/download")]

@@ -38,7 +38,7 @@ internal class OpenSubtitlesProvider : ISubtitlesProvider
 
         var client = _factory.CreateRestClient();
 
-        var response = await client.SearchSubtitlesAsync(query, _languagesMap[language], movieHash, cancellationToken);
+        var response = await client.SearchSubtitlesAsync(_languagesMap[language], movieHash, query, cancellationToken);
 
         return response.Data.Select(StaticMapper.ToDomain).ToList();
     }
