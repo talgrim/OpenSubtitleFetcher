@@ -1,4 +1,5 @@
 using ErrorOr;
+using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 using OpenSubtitleFetcher.Domain.Models.Subtitles;
 

@@ -1,3 +1,4 @@
+using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Subtitles;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Models.OpenSubtitlesApi;
 

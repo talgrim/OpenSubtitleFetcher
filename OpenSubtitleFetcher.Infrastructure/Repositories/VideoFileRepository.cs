@@ -15,7 +15,7 @@ internal class VideoFileRepository : IVideoFileRepository
             var directoryInfo = new DirectoryInfo(path);
             var files = directoryInfo
                 .EnumerateFiles()
-                .Where(x => VideoFile.Extensions.Contains(x.Extension));
+                .Where(x => VideoFile.Extensions.Contains(x.Extension,  StringComparer.OrdinalIgnoreCase));
 
             foreach (var file in files)
             {

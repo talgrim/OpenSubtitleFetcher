@@ -2,6 +2,7 @@ using OpenSubtitleFetcher.Application.Abstractions.Logging;
 using OpenSubtitleFetcher.Application.Abstractions.Providers;
 using OpenSubtitleFetcher.Application.Abstractions.Repositories;
 using OpenSubtitleFetcher.Application.Models.Enums;
+using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 using OpenSubtitleFetcher.Domain.Models.Subtitles;
 
@@ -110,15 +111,10 @@ public class DownloadSubtitlesUseCase : IDownloadSubtitlesUseCase
                     $"Failed to acquire download link for {query}: {downloadResult.FirstError.Description}",
                     LogResult.Error);
 
-                return false;
+                return downloadResult.FirstError.NumericType != (int)SubtitleDownloadErrorCode.QuotaExceeded;
             }
 
             var result = downloadResult.Value;
-            if (string.IsNullOrEmpty(result.Link))
-            {
-                _logger.Log($"Failed to acquire download link for {query}: {result.Message}", LogResult.Error);
-                return result.Remaining > 0;
-            }
 
             _logger.Log($"Acquired download link for subtitles {result.FileName} ({result.Remaining} downloads remaining)");
 

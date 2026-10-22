@@ -1,6 +1,7 @@
 using System.Net;
 using ErrorOr;
 using OpenSubtitleFetcher.Application.Abstractions.Providers;
+using OpenSubtitleFetcher.Application.Models.Subtitles;
 using OpenSubtitleFetcher.Domain.Models.Enums;
 using OpenSubtitleFetcher.Domain.Models.Subtitles;
 using OpenSubtitleFetcher.Infrastructure.OpenSubtitles.Factory;
@@ -51,12 +52,23 @@ internal class OpenSubtitlesProvider : ISubtitlesProvider
         {
             var response = await client.DownloadSubtitlesAsync(request, cancellationToken);
 
+            if (string.IsNullOrEmpty(response.Link))
+            {
+                return Error.Custom(
+                    (int)SubtitleDownloadErrorCode.MisingLink,
+                    nameof(SubtitleDownloadErrorCode.MisingLink),
+                    "Subtitles are missing link");
+            }
+
             return StaticMapper.ToDomain(response);
         }
         catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotAcceptable)
         {
             // OpenSubtitles responds with 406 once the daily download quota is used up
-            return Error.Failure(description: "Daily download quota has been reached");
+            return Error.Custom(
+                (int)SubtitleDownloadErrorCode.QuotaExceeded,
+                nameof(SubtitleDownloadErrorCode.QuotaExceeded),
+                "Daily download quota has been reached");
         }
     }
 
