@@ -1,0 +1,45 @@
+name: Release
+
+# Push a tag like v0.2.0 to build the app and publish it as a GitHub release.
+# The zip name is fixed so that
+# https://github.com/talgrim/OpenSubtitleFetcher/releases/latest/download/OpenSubtitleFetcher-win-x64.zip
+# always points at the newest release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test
+        run: dotnet test OpenSubtitleFetcher.sln -c Release
+
+      # Self-contained, so users do not need to install the .NET runtime.
+      # Built from a clean checkout, so appsettings.Local.json (the API key) is never included.
+      - name: Publish
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          dotnet publish OpenSubtitleFetcher.Wpf/OpenSubtitleFetcher.Wpf.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:Version=$version -o publish
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/* -DestinationPath OpenSubtitleFetcher-win-x64.zip
+
+      - name: Create release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" OpenSubtitleFetcher-win-x64.zip --title "${{ github.ref_name }}" --generate-notes
