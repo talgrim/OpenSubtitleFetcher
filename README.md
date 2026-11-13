@@ -13,7 +13,20 @@ Pick one or more folders, choose a language, and the app searches OpenSubtitles 
 - Processes several files in parallel while staying under the API rate limit (5 requests/second), and retries automatically on `429 Too Many Requests`
 - Stops cleanly once the daily download quota is used up
 
-## Requirements
+## Download
+
+Grab the latest build from the [Releases page](https://github.com/talgrim/OpenSubtitleFetcher/releases/latest)
+(`OpenSubtitleFetcher-win-x64.zip`, self-contained, no .NET install needed):
+
+1. Extract the zip.
+2. Copy `appsettings.Local_sample.json` to `appsettings.Local.json` and put your OpenSubtitles API key in it
+   (see [Setup](#setup) step 2).
+3. Run `OpenSubtitleFetcher.Wpf.exe`. The build is unsigned, so Windows SmartScreen may warn you the first time.
+
+To publish a new build, push a version tag (`git tag v0.2.0 && git push origin v0.2.0`). The
+`Release` workflow runs the tests and attaches the zip to a new GitHub release.
+
+## Requirements (building from source)
 
 - Windows
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
