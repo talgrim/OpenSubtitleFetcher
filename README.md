@@ -23,8 +23,11 @@ Grab the latest build from the [Releases page](https://github.com/talgrim/OpenSu
    (see [Setup](#setup) step 2).
 3. Run `OpenSubtitleFetcher.Wpf.exe`. The build is unsigned, so Windows SmartScreen may warn you the first time.
 
-To publish a new build, push a version tag (`git tag v0.2.0 && git push origin v0.2.0`). The
-`Release` workflow runs the tests and attaches the zip to a new GitHub release.
+Releases are automated with [release-please](https://github.com/googleapis/release-please): merge `develop` into
+`master` and the `Release` workflow opens (or updates) a release PR with the new version and a changelog built from
+the Conventional Commits (`feat` = minor, `fix` = patch, `!` = major). Merging that PR tags the release, runs the tests
+and attaches the zip to the GitHub release. Merge `master` back into `develop` afterwards. The repository setting
+"Allow GitHub Actions to create and approve pull requests" must be on.
 
 ## Requirements (building from source)
 
